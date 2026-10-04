@@ -1,0 +1,7 @@
+.DS_Store
+.venv/
+__pycache__/
+*.pyc
+
+# ダイジェストの出力（マスク済みでも顧客ログ由来なのでコミットしない）
+log-digest-out/

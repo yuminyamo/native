@@ -1,0 +1,53 @@
+# ログ書式の定義
+#
+# 【仮】実際のログ例を見ていないため、ガイドの架空例
+#   2026-09-30 10:42:05.907 ERROR [spool] Spool write failed: ...
+# に合う書式だけを定義しています。実ログに合わせて調整してください（README「残作業」参照）。
+#
+# 1行目がどの pattern にも一致しない行は、直前のレコードの続き（スタックトレース等）として扱います。
+# pattern には名前付きグループ ts / level / message が必須、component は任意です。
+
+defaults:
+  # auto: UTF-16 は BOM で判定、それ以外は UTF-8 → CP932 の順に試す
+  encoding: auto
+  # ログの時刻にタイムゾーンが付いていない場合の解釈（"+09:00" / "UTC" / "Asia/Tokyo" など）
+  timezone: "+09:00"
+
+formats:
+  - name: pms-default
+    # ディレクトリを渡したとき、ファイル名がこのいずれかに一致するものだけを読む
+    files: ["*.log", "*.log.*", "*.txt"]
+    # 上から順に試す
+    patterns:
+      # 2026-09-30 10:42:05.907 ERROR [spool] message
+      # 2026-09-30T01:42:06.120Z ERROR [agent] message
+      # 2026/09/30 10:42:06,004 WARNING [pool] message
+      - '^(?P<ts>\d{4}[-/]\d{2}[-/]\d{2}[ T]\d{2}:\d{2}:\d{2}(?:[.,]\d{1,9})?(?:Z|[+-]\d{2}:?\d{2})?)\s+(?P<level>[A-Za-z]+)\s+\[(?P<component>[^\]]*)\]\s?(?P<message>.*)$'
+      # [component] が無い形: 2026-09-30 10:42:05.907 ERROR message
+      - '^(?P<ts>\d{4}[-/]\d{2}[-/]\d{2}[ T]\d{2}:\d{2}:\d{2}(?:[.,]\d{1,9})?(?:Z|[+-]\d{2}:?\d{2})?)\s+(?P<level>[A-Za-z]+)\s+(?P<message>.*)$'
+    # 省略時は ISO 8601 風の書式を自動で解釈する。独自書式なら strptime 形式で指定
+    # ts_format: "%Y-%m-%d %H:%M:%S.%f"
+    # timezone: "+09:00"          # defaults.timezone を上書き
+    # encoding: cp932             # defaults.encoding を上書き
+    # clock_offset_seconds: 0     # 時計のずれの補正（CLI の --clock-offset が優先）
+
+# レベル表記のゆれをそろえる（キーは大文字で比較）
+level_aliases:
+  WARNING: WARN
+  WRN: WARN
+  W: WARN
+  ERR: ERROR
+  E: ERROR
+  SEVERE: ERROR
+  CRITICAL: FATAL
+  CRIT: FATAL
+  FTL: FATAL
+  INF: INFO
+  I: INFO
+  NOTICE: INFO
+  DBG: DEBUG
+  D: DEBUG
+  FINE: DEBUG
+  FINER: TRACE
+  FINEST: TRACE
+  TRC: TRACE
