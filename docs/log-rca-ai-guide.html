@@ -173,9 +173,9 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     <li><a href="#scenario">説明に使う障害例</a></li>
     <li><a href="#plan1">案1 ダイジェスト生成</a></li>
     <li><a href="#plan2">案2 ログ検索ツール</a></li>
-    <li><a href="#plan3">案3 正常時との差分・辞書</a></li>
+    <li><a href="#plan3">案3 環境をまたぐ知見</a></li>
     <li><a href="#plan4">案4 ログ自体の改善</a></li>
-    <li><a href="#roadmap">進め方と評価</a></li>
+    <li><a href="#roadmap">進め方と振り返り</a></li>
     <li><a href="#cautions">注意点</a></li>
     <li><a href="#glossary">付録A 用語集</a></li>
     <li><a href="#refs">付録B 参考文献</a></li>
@@ -187,7 +187,7 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <p class="eyebrow">PMS 保守 / 生成AI活用 / 障害調査</p>
   <h1>障害ログAI調査ガイド</h1>
   <p class="lead">ログを丸ごとAIに読ませるのではなく、機械的な処理で「証拠」を絞り込んでから渡し、足りない部分はAI自身に取りに行かせる。この考え方を4つの案に分け、架空の障害例を使って具体的に説明します。</p>
-  <div class="meta"><span>作成日 2026-10-04</span><span>対象：障害一次調査の自動化（チケット書き戻し）の拡張</span></div>
+  <div class="meta"><span>作成日 2026-10-04</span><span>改訂 2026-10-05</span><span>対象：障害一次調査の自動化（チケット書き戻し）の拡張</span></div>
 </header>
 
 <!-- ===================== 全体像 ===================== -->
@@ -196,7 +196,7 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 <figure>
   <div class="dg-wrap">
-  <svg class="dg" viewBox="0 0 880 420" role="img" aria-label="ログ一式からダイジェストを生成してAIに渡し、AIは検索ツール経由でログDBに必要な分だけ問い合わせ、結果を障害チケットに書き戻す構成図。正常ログ差分・既知ノイズ辞書・過去障害がダイジェスト生成とAIを支え、ログ自体の改善が入力の質を上げる。">
+  <svg class="dg" viewBox="0 0 880 420" role="img" aria-label="ログ一式からダイジェストを生成してAIに渡し、AIは検索ツール経由でログDBに必要な分だけ問い合わせ、結果を障害チケットに書き戻す構成図。ダイジェスト生成は同じ環境の平常期間と比べ、再現環境から作った既知ノイズ辞書を使う。ログ自体の改善が入力の質を上げる。">
     <defs>
       <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
       <marker id="ah-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-acc" d="M0,0 L10,5 L0,10 z"/></marker>
@@ -213,13 +213,11 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     <!-- 案3 -->
     <rect class="acc" x="230" y="22" width="190" height="92" rx="6"/>
     <text class="t-tag" x="244" y="44">案3</text>
-    <text class="t-strong" x="244" y="64">正常時との差分</text>
-    <text class="t-sub" x="244" y="84">既知ノイズ辞書</text>
-    <text class="t-sub" x="244" y="102">過去障害のシグネチャ</text>
+    <text class="t-strong" x="244" y="64">既知ノイズ辞書</text>
+    <text class="t-sub" x="244" y="84">再現環境のログとコードから</text>
+    <text class="t-sub" x="244" y="102">（シグネチャは後回し）</text>
     <line class="edge-acc" x1="315" y1="114" x2="315" y2="156" marker-end="url(#ah-acc)"/>
-    <text class="t-edge" x="322" y="140">除外・差分</text>
-    <line class="edge-acc" x1="420" y1="96" x2="510" y2="156" marker-end="url(#ah-acc)"/>
-    <text class="t-edge" x="472" y="108">類似障害</text>
+    <text class="t-edge" x="322" y="140">下に回す</text>
 
     <!-- 既存 -->
     <rect class="dash" x="690" y="22" width="170" height="92" rx="6"/>
@@ -240,7 +238,7 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     <rect class="acc" x="230" y="160" width="190" height="90" rx="6"/>
     <text class="t-tag" x="244" y="182">案1</text>
     <text class="t-strong" x="244" y="204">ダイジェスト生成</text>
-    <text class="t-sub" x="244" y="226">抽出・集計・マスク</text>
+    <text class="t-sub" x="244" y="226">抽出・集計・平常比較</text>
 
     <!-- AI -->
     <rect class="box" x="480" y="160" width="160" height="90" rx="6"/>
@@ -281,16 +279,16 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     <text class="t-edge" x="436" y="348">SQL</text>
   </svg>
   </div>
-  <figcaption>AIが最初に受け取るのは案1のダイジェストだけです。ログ全量はDBに置いたままにし、AIは案2のツールを通じて必要な部分を少しずつ取りに行きます。案3はダイジェストの精度を上げ、案4は長期的にログそのものを調べやすくします。点線は既にあるもの、または長期の取り組みです。</figcaption>
+  <figcaption>AIが最初に受け取るのは案1のダイジェストだけです。ダイジェストには、同じ環境の正常だった期間との比較も載せます。ログ全量はDBに置いたままにし、AIは案2のツールを通じて必要な部分を少しずつ取りに行きます。案3は環境をまたいで使える知見（既知ノイズ辞書）を再現環境から作ってダイジェストの精度を上げ、案4は長期的にログそのものを調べやすくします。点線は既にあるもの、または長期の取り組みです。</figcaption>
 </figure>
 
 <div class="tbl">
 <table>
   <thead><tr><th>案</th><th>役割</th><th>着手しやすさ</th><th>主な効果</th></tr></thead>
   <tbody>
-    <tr><td><strong>案1</strong> ダイジェスト生成</td><td>AIへの最初の入力を数千トークンに圧縮する</td><td>すぐ着手できる（スクリプトのみ）</td><td>コンテキスト削減、ノイズ除去、再現性</td></tr>
+    <tr><td><strong>案1</strong> ダイジェスト生成</td><td>AIへの最初の入力を数千トークンに圧縮し、同じ環境の平常期間と比べて「今回だけの変化」を目立たせる</td><td>すぐ着手できる（スクリプトのみ）</td><td>コンテキスト削減、ノイズ除去、再現性、少しずつ進む障害の発端の発見</td></tr>
     <tr><td><strong>案2</strong> ログ検索ツール</td><td>ダイジェストで足りない部分をAIが自分で取りに行く</td><td>案1の後（ログのDB化が前提）</td><td>見落とし防止、時間窓の外も調べられる</td></tr>
-    <tr><td><strong>案3</strong> 差分・辞書・過去事例</td><td>「いつも出ているログ」を除き、「今回だけの変化」を目立たせる</td><td>案1と並行して少しずつ</td><td>精度向上、ベテランの暗黙知の形式知化</td></tr>
+    <tr><td><strong>案3</strong> 環境をまたぐ知見</td><td>再現環境のログとソースコードから既知ノイズ辞書を作り、「いつも出ているログ」を下に回す</td><td>再現環境のログが手に入り次第（リリース時など）</td><td>どの顧客の障害でも使えるノイズの知見を、人のレビューなしで貯める</td></tr>
     <tr><td><strong>案4</strong> ログ自体の改善</td><td>相関IDや構造化で、ログを機械が辿りやすくする</td><td>改修の機会に継続的に</td><td>長期的な調査効率、ツールの単純化</td></tr>
   </tbody>
 </table>
@@ -308,7 +306,7 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
       <tbody>
         <tr><th>顧客・環境</th><td>A社 / PMS 5.2.3 / Windows Server 2019 / 印刷サーバ1台</td></tr>
         <tr><th>症状</th><td>9月30日 10時40分頃から、一部ユーザーの印刷ジョブがプリンタで出力されない。管理画面ではジョブが「保留」のまま残る。</td></tr>
-        <tr><th>受領したログ</th><td><code>pms-server.log</code> <code>print-agent.log</code> <code>db.log</code> <code>auth.log</code>（3日分、合計 約40万行）</td></tr>
+        <tr><th>受領したログ</th><td><code>pms-server.log</code> <code>print-agent.log</code> <code>db.log</code> <code>auth.log</code>（障害日の前2週間を含む 9/16〜9/30 の15日分、合計 約200万行）</td></tr>
         <tr><th>真の原因（後で判明）</th><td>一時ファイルの定期削除タスクが無効になっており、スプール領域が少しずつ埋まって容量が尽きた。</td></tr>
       </tbody>
     </table>
@@ -329,16 +327,17 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   <li><strong>時間窓の切り出し</strong>：チケットの発生時刻の前後（例：±30分）だけを残す。窓は後で案2のツールから広げられる。</li>
   <li><strong>マージ</strong>：複数ファイルを時刻順に1本へまとめる。サーバとエージェントの因果関係が並んで見えるようになる。</li>
   <li><strong>エラー抽出と前後の文脈</strong>：ERROR／例外／スタックトレースを塊ごと抜き出し、前後数行を付ける。重なる範囲は1つにまとめる。</li>
-  <li><strong>テンプレート化と集計</strong>：Drain3で同じ形のメッセージをまとめ、「テンプレート × 件数 × 初出時刻」の表にする。</li>
-  <li><strong>マスキング</strong>：ユーザー名、文書名、PC名、IPアドレスなど、顧客情報になり得る値を置き換える。</li>
+  <li><strong>テンプレート化と集計</strong>：Drain3で同じ形のメッセージをまとめ、「テンプレート × 件数 × 初出時刻」の表にする。テンプレート化は時間窓の中だけでなく全期間で行い、いつから出ているログかも分かるようにする。</li>
+  <li><strong>平常時との比較</strong>：同じ環境の、正常に動いていたと思われる期間と比べる。日ごとの件数から「ある日から出始めた・消えた」ログ（変化点）を見つけ、平常期間の同じ時刻帯と件数を比べる（後述）。</li>
 </ol>
+<p>顧客情報のマスキングは、ログを収集する段階で済ませておきます。案1に渡すログはマスキング済みとして扱い、ここでは行いません。</p>
 
 <figure>
   <div class="dg-wrap">
-  <svg class="dg" viewBox="0 0 760 252" role="img" aria-label="架空例でのログ量の絞り込み。40万行のログ一式が、時間窓で12,480行、エラー周辺の抽出で620行、テンプレート化で48種類、最終的に約5千トークンのダイジェストになる。">
+  <svg class="dg" viewBox="0 0 760 252" role="img" aria-label="架空例でのログ量の絞り込み。200万行のログ一式が、時間窓で12,480行、エラー周辺の抽出で620行、テンプレート化で48種類、最終的に約5千トークンのダイジェストになる。">
     <rect class="bar" x="20" y="20" width="420" height="30" rx="3"/>
-    <text x="32" y="40" class="t-strong">400,000 行</text>
-    <text x="452" y="40">ログ一式（3日分・4ファイル）</text>
+    <text x="32" y="40" class="t-strong">2,000,000 行</text>
+    <text x="452" y="40">ログ一式（15日分・4ファイル）</text>
 
     <rect class="bar" x="20" y="66" width="330" height="30" rx="3"/>
     <text x="32" y="86" class="t-strong">12,480 行</text>
@@ -354,7 +353,7 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
     <rect class="bar-end" x="20" y="204" width="90" height="30" rx="3"/>
     <text x="122" y="224" class="t-strong">約5,000 トークンのダイジェスト</text>
-    <text x="370" y="224" class="t-sub">（全量なら約1,600万トークン：1行40トークン換算）</text>
+    <text x="370" y="224" class="t-sub">（全量なら約8,000万トークン：1行40トークン換算）</text>
   </svg>
   </div>
   <figcaption>架空例での絞り込みの目安です。棒の長さは対数で縮めたイメージで、実際の比率はもっと極端です。</figcaption>
@@ -395,6 +394,61 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </div>
 <p>12,000行あまりのログが、意味の単位で数十行の表になります。件数だけ見ると T21 と T12 が目立ちますが、<strong>初出時刻</strong>を並べると T07・T08 が最初に起きていることが分かります。件数で並べるだけでなく初出時刻を必ず載せるのはこのためです。</p>
 
+<h3>平常時との比較（平常プロファイル）</h3>
+<p>同じ環境の「正常に動いていたと思われる期間」と障害時を比べ、今回だけ変わったものを目立たせます。顧客ごとに使う機能の組み合わせや環境が違うので、比べる相手は他の環境ではなく、<strong>その環境自身の過去</strong>です。顧客はおよそ1ヶ月分のログを保存しているので、障害日だけでなく<strong>その前の日も含めて</strong>受け取ります（最低でも前営業日まで、できれば2週間程度）。</p>
+<p>比較は2つの見方で行います。どちらもLLMを使わない決定論的な規則です。</p>
+<ul>
+  <li><strong>変化点</strong>：受け取った全日について、テンプレートごとの日別件数を数え、「ある日から出始めた（出現）」「ある日から消えた（消失）」を見つける。少しずつ進む障害は、障害日には原因のログが出ず、変化点にだけ現れることがある。</li>
+  <li><strong>平常期間との比較</strong>：正常だったと思われる日の、障害の時間窓と同じ時刻帯と件数を比べる。障害時だけ<em>出た</em>ログだけでなく、障害時に<em>消えた</em>ログも重要な手がかりになる。処理が黙って止まった場合はERRORが出ず、「いつもの完了ログが無い」ことでしか気づけないため。</li>
+</ul>
+
+<div class="example">
+  <div class="ex-head"><span>変化点：テンプレートごとの日別件数（9/16〜9/30）</span><span class="chip ex">架空の例</span></div>
+  <div class="ex-body" style="padding:0">
+  <div class="tbl" style="margin:0;border:none;border-radius:0">
+  <table>
+    <thead><tr><th>日付</th><th>変化</th><th>テンプレート</th><th>変化の前</th><th>変化の後</th></tr></thead>
+    <tbody>
+      <tr><td class="num">09-24（木）</td><td><span class="chip down">消失</span></td><td class="mono">Temp cleanup finished: &lt;NUM&gt; files removed</td><td class="num">8/8日</td><td class="num">0/7日</td></tr>
+      <tr><td class="num">09-24（木）</td><td><span class="chip new">出現</span></td><td class="mono">Temp cleanup skipped: scheduled task disabled</td><td class="num">0/8日</td><td class="num">7/7日</td></tr>
+      <tr><td class="num">09-28（月）</td><td><span class="chip new">出現</span></td><td class="mono">Spool usage &lt;NUM&gt;% on &lt;DRIVE&gt;</td><td class="num">0/12日</td><td class="num">3/3日</td></tr>
+    </tbody>
+  </table>
+  </div>
+  </div>
+</div>
+<p>「8/8日」は、その期間の8日のうち8日に出ていたという意味です。毎日3時に動く削除タスクの完了ログが9/24に消え、代わりにスキップのログが出始めています。案2の例でAIが最後にたどり着く原因を、ダイジェストの段階で直接指しています。</p>
+
+<h4>平常期間の選び方</h4>
+<p>平常期間は、規則で自動選択し、AIが確認して必要なら選び直します。</p>
+<ul>
+  <li><strong>規則</strong>：障害日より前の営業日のうち、最初の変化点より前で、ERRORが急増していない最も近い日を選ぶ。営業日はカレンダーではなく件数で判定する（国ごとの祝日や顧客ごとの休みを知らなくて済む）。</li>
+  <li><strong>AIによる選び直し</strong>：障害内容・問い合わせ内容と照らして合わなければ、AIが期間を指定して作り直す。選んだ理由はダイジェストに残す。</li>
+  <li><strong>ログの事実を優先する</strong>：問い合わせの「昨日までは正常」は手がかりであって事実ではない。その期間より前に変化点があれば、ダイジェストで警告する。</li>
+</ul>
+<p>架空例では、前営業日の9/29ではなく、変化点（9/24）より前の9/23が選ばれます。9/29と比べると、削除タスクのスキップもスプール使用率の警告も両日に出ているので「変化なし」になり、原因を見逃すからです。受け取ったログの最初から変化点の後に見える場合は、さらに前のログを依頼するよう警告します。</p>
+
+<div class="example">
+  <div class="ex-head"><span>同じ時刻帯の比較：平常期間（9/23）と障害日（9/30）、10:10〜11:10</span><span class="chip ex">架空の例</span></div>
+  <div class="ex-body" style="padding:0">
+  <div class="tbl" style="margin:0;border:none;border-radius:0">
+  <table>
+    <thead><tr><th>テンプレート</th><th>平常期間</th><th>障害日</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">Spool write failed: disk quota exceeded on &lt;PATH&gt;</td><td class="num">0</td><td><div class="barcell"><span class="minibar inc" style="width:22px"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">214</span></div></td><td><span class="chip new">障害時のみ</span></td></tr>
+      <tr><td class="mono">Connection pool wait &lt;NUM&gt; ms (active=&lt;NUM&gt;/&lt;NUM&gt;)</td><td class="num">35</td><td><div class="barcell"><span class="minibar inc" style="width:96px"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">960</span></div></td><td><span class="chip up">急増（27倍）</span></td></tr>
+      <tr><td class="mono">Job &lt;JOBID&gt; completed (pages=&lt;NUM&gt;)</td><td class="num">3,400</td><td><div class="barcell"><span class="minibar" style="width:41px"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">410</span></div></td><td><span class="chip down">激減（88%減）</span></td></tr>
+      <tr><td class="mono">LDAP referral ignored: &lt;URL&gt;</td><td class="num">2,100</td><td><div class="barcell"><span class="minibar" style="width:150px;max-width:150px"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">2,050</span></div></td><td><span class="chip noise">既知ノイズ（変化なし）</span></td></tr>
+      <tr><td class="mono">License check OK</td><td class="num">12</td><td><div class="barcell"><span class="minibar" style="width:2px"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">12</span></div></td><td><span class="chip same">変化なし</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  </div>
+</div>
+<p>削除タスクの完了ログは3時に出るので、10時台の比較には現れません。同じ時刻帯の比較は急な変化に強く、変化点は少しずつ進む変化に強いので、両方を載せます。判定が付かなかったテンプレートは、その環境の平常時からのノイズとして扱えます。</p>
+
+<div class="callout"><p>件数の少なさだけで異常と決めるのは危険です。大規模な障害ログの研究でも、障害を示すログの相当部分は低頻度ではなかったと報告されています。件数の増減に加えて「初出時刻」「平常期間に存在するか」を組み合わせて判断します。</p></div>
+
 <h3>具体例：AIに渡すダイジェスト</h3>
 <div class="example">
   <div class="ex-head"><span>digest_INC-2026-0931.md（自動生成）</span><span class="chip ex">架空の例</span></div>
@@ -410,14 +464,25 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 10:42:05.910 [job-worker-1] Job &lt;JOBID&gt; aborted: IOException at SpoolWriter.write(SpoolWriter.java:212)
 10:42:06.330 [spool] Spool write failed: disk quota exceeded on &lt;PATH&gt;
 
+<span class="kw">## 平常時との比較</span>
+平常期間: 09-23（水）10:10〜11:10（自動選択: 09-24 以降に変化点があるため、その前で最も近い営業日）
+<span class="kw">### 変化点（日別件数から）</span>
+09-24  消失  Temp cleanup finished: &lt;NUM&gt; files removed     8/8日 → 0/7日
+09-24  出現  Temp cleanup skipped: scheduled task disabled   0/8日 → 7/7日
+09-28  出現  Spool usage &lt;NUM&gt;% on &lt;DRIVE&gt;                  0/12日 → 3/3日
+<span class="kw">### 平常期間の同じ時刻帯との比較</span>
+障害時のみ  Spool write failed: disk quota exceeded on &lt;PATH&gt;     0 → 214
+急増        Connection pool wait &lt;NUM&gt; ms (active=&lt;NUM&gt;/&lt;NUM&gt;)  35 → 960
+激減        Job &lt;JOBID&gt; completed (pages=&lt;NUM&gt;)               3,400 → 410
+
 <span class="kw">## テンプレート集計（ERROR/WARN、初出順）</span>
 T15  WARN     3件  初出10:20:44  Spool usage &lt;NUM&gt;% on &lt;DRIVE&gt;
 T07  ERROR  214件  初出10:42:05  Spool write failed: disk quota exceeded on &lt;PATH&gt;
 T08  ERROR  211件  初出10:42:05  Job &lt;JOBID&gt; aborted: IOException at &lt;*&gt;
 T12  WARN   960件  初出10:42:06  Connection pool wait &lt;NUM&gt; ms (active=&lt;NUM&gt;/&lt;NUM&gt;)
 
-<span class="kw">## 既知ノイズとして除外（案3の辞書による）</span>
-T21  LDAP referral ignored（2,050件）: AD多段構成で平常時から出力
+<span class="kw">## 既知ノイズ（下に回したもの）</span>
+T21  LDAP referral ignored（窓内 2,050件、平常期間 2,100件）: referral を無視して次のDCに問い合わせを続ける。認証の結果には影響しない
 
 <span class="kw">## 代表スタックトレース（T08、1件のみ）</span>
 java.io.IOException: There is not enough space on the disk
@@ -449,7 +514,7 @@ miner = TemplateMiner(config=config)
 
 <div class="kv">
   <div class="good"><h4>良い点</h4><ul><li>LLMを使わないので速く、費用もかからない</li><li>同じ入力から同じ出力になり、テストできる</li><li>既存の一次調査パイプラインの前段に足すだけで済む</li></ul></div>
-  <div class="caution"><h4>限界</h4><ul><li>抽出の段階で重要な1行を落とすことがある</li><li>ERRORにならない異常（処理が黙って止まる等）は拾いにくい</li><li>この2点は案2と案3で補う</li></ul></div>
+  <div class="caution"><h4>限界</h4><ul><li>抽出の段階で重要な1行を落とすことがある（案2で補う）</li><li>平常期間の選び方を誤ると比較が役に立たない（規則の候補をAIが確認して選び直す）</li><li>前の日のログが無いと平常時との比較ができない（ログ収集で期間を決めておく）</li></ul></div>
 </div>
 
 <!-- ===================== 案2 ===================== -->
@@ -475,12 +540,12 @@ miner = TemplateMiner(config=config)
 </div>
 
 <h3>具体例：AIの調査の進み方</h3>
-<p>架空の障害で、AIがツールを使って原因にたどり着くまでの流れです。ダイジェストの時間窓（10:10〜11:10）の外にある証拠を、AIが自分で取りに行っている点に注目してください。</p>
+<p>架空の障害で、AIがツールを使って原因を確かめるまでの流れです。ダイジェストの変化点が指した「9/24」を手がかりに、時間窓（10:10〜11:10）の外にある証拠をAIが自分で取りに行っている点に注目してください。</p>
 
 <ol class="trace">
   <li class="ai"><div>
     <div class="who">AI ダイジェストを読んで仮説を立てる</div>
-    <p>最初の異常は10:42:05のスプール書き込み失敗（T07）。DB接続待ち（T12）はその後から増えているので結果側の可能性が高い。容量不足がいつから進んでいたかを確かめる。</p>
+    <p>最初の異常は10:42:05のスプール書き込み失敗（T07）。DB接続待ち（T12）はその後から増えているので結果側の可能性が高い。変化点によると、9/24から削除タスクの完了ログが消え、スキップのログが出始めている。容量不足がいつから進んでいたかを確かめ、9/24の変化と結びつくかを見る。</p>
   </div></li>
   <li><div>
     <div class="who">ツール呼び出し</div>
@@ -513,15 +578,15 @@ miner = TemplateMiner(config=config)
   </div></li>
 </ol>
 
-<div class="callout"><p>AIへの入力は、ダイジェスト約5,000トークンとツール結果4回分を合わせても1万トークン程度です。それでいて、ダイジェストだけでは見えなかった「9月24日から」という核心の証拠に届いています。</p></div>
+<div class="callout"><p>AIへの入力は、ダイジェスト約5,000トークンとツール結果4回分を合わせても1万トークン程度です。ダイジェストの変化点が示した「9月24日から」を、AIがツールで裏付けて結論にしています。</p></div>
 
 <h3>DuckDB にログを入れる</h3>
-<p>案1でパースしたレコードを、そのままDuckDBのテーブルにします。サーバを立てる必要がなく、障害1件ごとに1ファイルのDBを作って捨てられるので、顧客ごとにログを分けて扱う運用にも合います。</p>
+<p>案1でパースしたレコード（全期間）を、そのままDuckDBのテーブルにします。サーバを立てる必要がなく、障害1件ごとに1ファイルのDBを作って捨てられるので、顧客ごとにログを分けて扱う運用にも合います。</p>
 <div class="example">
   <div class="ex-head"><span>取り込みと問い合わせの例</span><span class="chip same">SQL（DuckDB）</span></div>
   <div class="ex-body">
-<pre><span class="cm">-- 案1で出力した Parquet をそのままテーブルにする</span>
-<span class="kw">CREATE TABLE</span> logs <span class="kw">AS SELECT</span> * <span class="kw">FROM</span> read_parquet('INC-2026-0931/parsed/*.parquet');
+<pre><span class="cm">-- 案1で出力した JSON Lines（gzip）をそのままテーブルにする</span>
+<span class="kw">CREATE TABLE</span> logs <span class="kw">AS SELECT</span> * <span class="kw">FROM</span> read_json('INC-2026-0931/parsed/records.jsonl.gz');
 
 <span class="cm">-- 1分ごとの件数推移（count_by_time ツールの中身）</span>
 <span class="kw">SELECT</span> date_trunc('minute', ts) <span class="kw">AS</span> m, template_id, count(*) <span class="kw">AS</span> n
@@ -539,64 +604,66 @@ miner = TemplateMiner(config=config)
 </ul>
 
 <!-- ===================== 案3 ===================== -->
-<h2 id="plan3"><span class="plan">案3</span>正常時との差分・既知ノイズ辞書・過去障害</h2>
-<p class="h2-sub">「いつも出ているもの」を外し、「今回だけ変わったもの」を目立たせます。</p>
+<h2 id="plan3"><span class="plan">案3</span>環境をまたいで残す知見</h2>
+<p class="h2-sub">障害ごとに捨てる顧客ログとは別に、再現環境とソースコードから、どの顧客の障害でも使える知見を作って残します。</p>
 
-<h3>正常時との差分</h3>
-<p>同じバージョンの正常なログ（社内の検証環境、または同じ顧客の障害前の時間帯）を比較対象にして、テンプレートごとの件数を並べます。障害時だけ<em>出た</em>ログだけでなく、障害時に<em>消えた</em>ログも重要な手がかりです。処理が黙って止まった場合はERRORが出ず、「いつもの完了ログが無い」ことでしか気づけません。</p>
-
-<div class="example">
-  <div class="ex-head"><span>同じ1時間の比較：正常日（9/23）と障害日（9/30）</span><span class="chip ex">架空の例</span></div>
-  <div class="ex-body" style="padding:0">
-  <div class="tbl" style="margin:0;border:none;border-radius:0">
-  <table>
-    <thead><tr><th>テンプレート</th><th>正常日</th><th>障害日</th><th>判定</th></tr></thead>
-    <tbody>
-      <tr><td class="mono">Spool write failed: disk quota exceeded on &lt;PATH&gt;</td><td class="num">0</td><td><div class="barcell"><span class="minibar inc" style="width:22px"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">214</span></div></td><td><span class="chip new">障害時のみ</span></td></tr>
-      <tr><td class="mono">Connection pool wait &lt;NUM&gt; ms (active=&lt;NUM&gt;/&lt;NUM&gt;)</td><td class="num">35</td><td><div class="barcell"><span class="minibar inc" style="width:96px"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">960</span></div></td><td><span class="chip up">急増（27倍）</span></td></tr>
-      <tr><td class="mono">Job &lt;JOBID&gt; completed (pages=&lt;NUM&gt;)</td><td class="num">3,400</td><td><div class="barcell"><span class="minibar" style="width:41px"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">410</span></div></td><td><span class="chip down">激減（88%減）</span></td></tr>
-      <tr><td class="mono">Temp cleanup finished: &lt;NUM&gt; files removed</td><td class="num">1</td><td><div class="barcell"><span class="minibar" style="width:0"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">0</span></div></td><td><span class="chip down">消失</span></td></tr>
-      <tr><td class="mono">LDAP referral ignored: &lt;URL&gt;</td><td class="num">2,100</td><td><div class="barcell"><span class="minibar" style="width:150px;max-width:150px"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">2,050</span></div></td><td><span class="chip noise">既知ノイズ</span></td></tr>
-      <tr><td class="mono">License check OK</td><td class="num">12</td><td><div class="barcell"><span class="minibar" style="width:2px"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">12</span></div></td><td><span class="chip same">変化なし</span></td></tr>
-    </tbody>
-  </table>
-  </div>
-  </div>
+<h3>案1との分担</h3>
+<p>同じ環境の平常期間との比較は、そのチケットのログだけで完結するので案1に含めます。案3が扱うのは、チケットや環境をまたいで残すものです。</p>
+<div class="tbl">
+<table>
+  <thead><tr><th></th><th>案1 ダイジェスト生成</th><th>案3 環境をまたぐ知見</th></tr></thead>
+  <tbody>
+    <tr><th>入力</th><td>顧客から受け取ったログ</td><td>再現環境のログとソースコード</td></tr>
+    <tr><th>実行する時</th><td>チケットごと</td><td>リリース時、再現環境のログが手に入った時</td></tr>
+    <tr><th>出力</th><td>障害対応の後に捨てる</td><td>辞書として残す</td></tr>
+  </tbody>
+</table>
 </div>
-<p>この比較をダイジェストに載せると、AIは「LDAPの警告は平常どおり」「cleanupの完了ログが消えている」という事実を最初から持った状態で調査を始められます。上の表では「消失」の行が、案2の例で最後にたどり着いた原因を最初から指しています。</p>
-
-<div class="callout"><p>件数の少なさだけで異常と決めるのは危険です。大規模な障害ログの研究でも、障害を示すログの相当部分は低頻度ではなかったと報告されています。件数の増減に加えて「初出時刻」「平常時に存在するか」を組み合わせて判断します。</p></div>
+<div class="callout"><p>他の顧客環境から貯めた統計は使いません。顧客ごとに使う機能の組み合わせや環境が違い、比べる基準にならないためです。顧客ログは障害対応が終われば削除するので、過去の顧客ログを後から集めることもできません。</p></div>
 
 <h3>既知ノイズ辞書</h3>
-<p>平常時から出ているWARN／ERRORを、理由付きでバージョンごとに登録します。ダイジェスト生成時に除外し、「除外した」ことだけを1行で残します。長年の保守で担当者が頭の中に持っている「このエラーは無視してよい」という判断を、文書にする作業でもあります。</p>
+<p>平常時から出ているWARN／ERRORを、理由と根拠付きでバージョンごとに登録します。案1は一致したログをダイジェストの下に回し、件数だけを1行で残します。長年の保守で担当者が頭の中に持っている「このエラーは無視してよい」という判断を、再現環境のログとソースコードから作り直す作業でもあります。</p>
+<p>知見のある担当者がレビューする時間は取れない前提なので、<strong>人のレビューなしで</strong>作ります。作り方は次のとおりです。</p>
+<ol>
+  <li><strong>正常期間のログを用意する</strong>：再現環境（検証環境）で、試験に合格した期間や障害を再現する前の期間など、正常に動いていたと分かっている期間のログを使う。再現環境は障害を再現する場所でもあるので、再現した期間は含めない。</li>
+  <li><strong>候補を出す（スクリプト）</strong>：案1と同じ処理でテンプレート化し、正常期間に何度も出ていたWARN／ERRORを候補にする。</li>
+  <li><strong>判断する（AI）</strong>：候補ごとに、AIがソースコードでログの出力箇所を探して前後の処理を読み、登録するかを決めて理由を書く。</li>
+  <li><strong>登録する（スクリプト）</strong>：理由と根拠がそろっているかを検査してから辞書に反映する。登録しなかった候補も理由付きで残し、次から同じ候補を出さない。</li>
+</ol>
+<p>AIが登録してよいのは、次のすべてを満たすものだけです。<strong>迷ったら登録しません。</strong>誤って登録すると本当の原因が下に回されて見落とされますが、登録しなければダイジェストに少し余計な行が残るだけで済むからです。</p>
+<ul>
+  <li>出力箇所をソースコードで特定できた</li>
+  <li>ログを出した後も処理が正常に続き、結果に影響しない（代わりの手段で成功する、再試行で成功する、使っていない任意機能について知らせるだけ、など）</li>
+  <li>顧客環境でも平常時に出うる（監視サーバが無い、試用ライセンスなど、再現環境に特有の条件で出るものではない）</li>
+  <li>顧客環境で出たら設定ミスや異常の手がかりになるものではない</li>
+</ul>
 <div class="example">
   <div class="ex-head"><span>known_noise.yaml</span><span class="chip ex">架空の例</span></div>
   <div class="ex-body">
-<pre>- template: "LDAP referral ignored: &lt;*&gt;"
-  versions: ["5.1.*", "5.2.*"]
-  reason: "AD多段構成の環境では常時出力される。動作への影響なし"
-  added: 2026-05 保守チーム
-
-- template: "Font cache rebuild skipped"
-  versions: ["*"]
-  reason: "起動時に毎回出る。性能・機能への影響なし"
-  added: 2026-06 保守チーム</pre>
-    <p class="ex-note">登録には理由を必須にします。理由のない除外は、本当の原因を隠す原因になります。</p>
+<pre>- template: "LDAP referral ignored: &lt;URL&gt;"
+  versions: ["5.2.*"]
+  reason: "referral を無視して次のDCに問い合わせを続ける処理。認証の結果には影響しない"
+  evidence:
+    source: "再現環境 PMS 5.2.3 リリース試験 2026-09-16〜09-23"
+    rate: "1時間あたり約12件（8日間で計2,304件）"
+    code: "auth/LdapClient.java:340"
+  generated_by: AI
+  added: 2026-10-05</pre>
+    <p class="ex-note">根拠（どの環境・期間のログか、平常時の件数、出力箇所）を必須にします。人が後から見直す時に、何を根拠に登録したかが分かります。</p>
   </div>
 </div>
 
-<h3>過去障害のシグネチャ</h3>
-<p>解決済みの障害チケットに、そのとき特徴的だったテンプレートの組み合わせ（シグネチャ）を紐付けて貯めます。新しい障害のダイジェストと照合し、似た過去事例があればAIに渡します。</p>
-<div class="example">
-  <div class="ex-head"><span>照合結果の例</span><span class="chip ex">架空の例</span></div>
-  <div class="ex-body">
-<pre><span class="kw">類似の過去障害: INC-2025-0412</span>（B社 / PMS 5.1.8）  一致度: テンプレート 3/4 一致
-  シグネチャ: Spool write failed / Job aborted: IOException / Spool usage &lt;NUM&gt;%
-  原因: OSアップデート後に一時ファイル削除タスクが無効化されていた
-  対処: タスクを再有効化。恒久対策として容量監視の閾値を追加（5.1.9）</pre>
-    <p class="ex-note">過去事例はあくまで「候補」としてAIに渡し、今回のログで裏付けが取れるかを確かめさせます。</p>
-  </div>
-</div>
+<h4>人のレビューがない分の安全策</h4>
+<ul>
+  <li><strong>除外せず、下に回すだけにする</strong>：ダイジェストに件数を1行で残し、案2のツールでは通常どおり検索できる。</li>
+  <li><strong>今回だけ様子が違えば、ノイズ扱いをやめる</strong>：平常期間より急増した、平常期間に無かった、ある日から出始めた、のどれかに当たれば通常のログとして扱う。</li>
+  <li><strong>固定部分が短いテンプレートは登録しない</strong>：<code>&lt;*&gt; failed</code> のような項目は関係のないログまで一致してしまう。</li>
+  <li><strong>バージョンで範囲を限る</strong>：出典と同じバージョン系列にだけ適用し、新しいバージョンでは再現環境のログから作り直す。</li>
+  <li><strong>顧客ログからは作らない</strong>：顧客環境は「正常だった」と確認できない。少しずつ進んでいた障害のログを平常と誤認するおそれがある。顧客環境ごとの平常時のノイズは、案1の平常期間との比較が扱う。</li>
+</ul>
+
+<h3>過去障害のシグネチャ（後回し）</h3>
+<p>解決済みの障害チケットに特徴的なテンプレートの組み合わせ（シグネチャ）を紐付けて貯め、新しい障害と照合する案です。年に10件程度の障害では蓄積が少なく、顧客ごとに使い方も違うため照合が当たる見込みが小さいので、後回しにします。始める場合は、既知ノイズ辞書と同じく案3の知見として残します。</p>
 
 <!-- ===================== 案4 ===================== -->
 <h2 id="plan4"><span class="plan">案4</span>ログ自体の改善</h2>
@@ -618,29 +685,38 @@ miner = TemplateMiner(config=config)
   <li><strong>相関ID</strong>：1つの印刷ジョブがサーバ、エージェント、DBをまたいで動くとき、同じIDを全ログに出す。案2のツールで1回の検索で全経路を追える。</li>
   <li><strong>イベント名と理由コード</strong>：文章ではなく固定の名前を出す。Drain3に頼らなくても集計できる。</li>
   <li><strong>状態のスナップショット</strong>：容量や接続数など、障害時に知りたい値を定期的に出す。上の例の「Spool usage」はその一種。</li>
-  <li><strong>ログ収集の標準化</strong>：顧客から受け取るログ一式（ファイル、期間、設定情報）を収集ツールで固定する。ダイジェスト生成の前提がそろう。</li>
+  <li><strong>ログ収集の標準化</strong>：顧客から受け取るログ一式（ファイル、期間、設定情報）を収集ツールで固定する。期間には、平常時との比較に使う障害日より前の日を含める。ダイジェスト生成の前提がそろう。</li>
 </ul>
-<p>約1,000万行のコードすべてを直す必要はありません。障害が多い機能、案3の差分で「手がかりが足りなかった」機能から順に手を入れるのが現実的です。</p>
+<p>約1,000万行のコードすべてを直す必要はありません。障害が多い機能、平常時との比較でも「手がかりが足りなかった」機能から順に手を入れるのが現実的です。</p>
 
 <!-- ===================== 進め方 ===================== -->
-<h2 id="roadmap">進め方と評価</h2>
-<p class="h2-sub">効果を測りながら、案1から順に積み上げます。</p>
+<h2 id="roadmap">進め方と振り返り</h2>
+<p class="h2-sub">評価用のデータは用意せず、実際の障害で使いながら案1から順に積み上げます。</p>
 
 <div class="phases">
-  <div class="phase"><div class="when">準備<b>評価セット</b></div><div><p>解決済みの市場障害10〜20件について、受領したログ一式と「正解の原因」をセットにする。種類（設定・環境・コード不具合・外部連携）が偏らないように選ぶ。</p></div></div>
-  <div class="phase"><div class="when">段階1<b>案1 ダイジェスト</b></div><div><p>ダイジェスト生成スクリプトを作り、既存の一次調査パイプラインの前段に入れる。評価セットで「ダイジェストに正解の手がかりが含まれていたか」をまず測る。</p></div></div>
+  <div class="phase"><div class="when">段階1<b>案1 ダイジェスト</b></div><div><p>ダイジェスト生成スクリプト（平常時との比較を含む）を作り、既存の一次調査パイプラインの前段に入れる。ログ収集で受け取る期間に、障害日より前の日を含める。</p></div></div>
   <div class="phase"><div class="when">段階2<b>案2 検索ツール</b></div><div><p>DuckDBへの取り込みと検索ツールを skill として追加する。AIが何回ツールを呼んだか、どの証拠で結論を出したかを記録して見直す。</p></div></div>
-  <div class="phase"><div class="when">段階3<b>案3 差分・辞書</b></div><div><p>既知ノイズ辞書を主要バージョンから作り始め、正常ログとの差分をダイジェストに加える。解決済みチケットへのシグネチャ付与を運用に組み込む。</p></div></div>
+  <div class="phase"><div class="when">段階3<b>案3 既知ノイズ辞書</b></div><div><p>再現環境の正常期間のログとソースコードから、既知ノイズ辞書をAIが作る。リリースのたびに、そのバージョンの試験ログで作り直す。</p></div></div>
   <div class="phase"><div class="when">継続<b>案4 ログ改善</b></div><div><p>段階1〜3の振り返りで「ログに手がかりが無かった」箇所を記録し、改修の機会にログを追加・構造化する。</p></div></div>
 </div>
 
-<h3>測る指標</h3>
+<h3>振り返りの記録</h3>
+<p>評価用のデータが無い分、何がうまくいかなかったかを後から確かめられるようにします。チケットを閉じる時に、次の数行を残します（任意）。顧客ログの本文は残しません。</p>
+<ul>
+  <li>比較に使った平常期間と、AIが選び直した場合はその理由</li>
+  <li>AIの結論と、チケットに書かれた最終的な原因</li>
+  <li>最終的な原因のログが、既知ノイズとして下に回されていなかったか</li>
+</ul>
+
+<h3>見る指標</h3>
 <div class="tbl">
 <table>
   <thead><tr><th>指標</th><th>意味</th></tr></thead>
   <tbody>
-    <tr><td>正解原因への到達率</td><td>評価セットのうち、AIの一次調査が正解の原因（または正しい方向）を示した割合</td></tr>
+    <tr><td>原因への到達</td><td>AIの一次調査が、最終的な原因（または正しい方向）を示したか</td></tr>
     <tr><td>根拠の正しさ</td><td>AIが挙げたログ行が実在し、結論を支えているか。ハルシネーションの検出にもなる</td></tr>
+    <tr><td>平常期間の妥当さ</td><td>規則で選んだ平常期間をAIが選び直した頻度と理由。多ければ規則を見直す</td></tr>
+    <tr><td>既知ノイズの誤り</td><td>原因のログが下に回されていた件数。1件でもあれば、その項目と判断基準を見直す</td></tr>
     <tr><td>一次調査の所要時間</td><td>チケット登録から一次調査結果の書き戻しまで</td></tr>
     <tr><td>AIへの入力トークン量</td><td>費用と速度の目安。全量投入と比べてどれだけ減ったか</td></tr>
     <tr><td>担当者が追加で読んだログ量</td><td>AIの結果を受けて人が確認に使った時間。最終的に減らしたいのはここ</td></tr>
@@ -651,8 +727,9 @@ miner = TemplateMiner(config=config)
 <!-- ===================== 注意点 ===================== -->
 <h2 id="cautions">注意点</h2>
 <div class="kv">
-  <div class="caution"><h4>顧客情報のマスキング</h4><ul><li>コードの外部送信は許可済みでも、顧客ログは別扱い</li><li>ユーザー名、文書名、PC名、IP、メールアドレスを置換</li><li>置換は一貫させる（同じ人は常に同じ記号）と追跡できる</li></ul></div>
-  <div class="caution"><h4>複数バージョン・国別差異</h4><ul><li>ログ形式がバージョンで異なる場合はパーサ設定を分ける</li><li>既知ノイズ辞書もバージョン別に持つ</li><li>案件個別版は差分比較の基準ログを別に用意する</li></ul></div>
+  <div class="caution"><h4>顧客データの扱い</h4><ul><li>コードの外部送信は許可済みでも、顧客ログは別扱い</li><li>ユーザー名、文書名、PC名、IP、メールアドレスはログ収集の段階で置換する。置換は一貫させる（同じ人は常に同じ記号）と追跡できる</li><li>顧客ログは障害対応の後に削除する。残してよいのはテンプレートと件数の統計だけ</li></ul></div>
+  <div class="caution"><h4>複数バージョン・国別差異</h4><ul><li>ログ形式がバージョンで異なる場合はパーサ設定を分ける</li><li>既知ノイズ辞書はバージョン系列ごとに再現環境のログから作る</li><li>平常期間との比較は同じ環境の過去と比べるので、案件個別版でも基準のログを別に用意しなくてよい</li></ul></div>
+  <div class="caution"><h4>平常期間の選び方</h4><ul><li>前営業日に既に異常が始まっていることがある（少しずつ進む障害）</li><li>問い合わせの「昨日までは正常」は事実と限らない。ログの変化点を優先する</li><li>選び直した場合は理由を残す</li></ul></div>
   <div class="caution"><h4>時刻のずれ</h4><ul><li>サーバ・クライアント間の時計のずれ、タイムゾーンの違い</li><li>マージ前に正規化し、ずれがあればダイジェストに明記</li></ul></div>
   <div class="caution"><h4>根拠の確認</h4><ul><li>AIの結論には根拠のログ行（時刻・ファイル）を必ず付けさせる</li><li>引用された行が実在するかを機械的に照合する</li></ul></div>
 </div>
@@ -666,17 +743,20 @@ miner = TemplateMiner(config=config)
   <div><dt>ログテンプレート<small>log template / log parsing</small></dt><dd><p>ログメッセージを「固定の文言」と「毎回変わる値」に分けたときの固定部分の形です。たとえば <code>Job J-20391 aborted</code> と <code>Job J-20392 aborted</code> は、どちらも <code>Job &lt;*&gt; aborted</code> という同じテンプレートになります。生ログからテンプレートを取り出す処理をログパースと呼びます。</p></dd></div>
   <div><dt>Drain<small>ログパースのアルゴリズム</small></dt><dd><p>2017年に発表された、ログを高速にテンプレート化するアルゴリズムです。メッセージの単語数と先頭の単語で木構造をたどって候補を絞り、似ていれば同じグループ、似ていなければ新しいグループにします。学習データが不要で、1行ずつ流しながら処理できるのが特徴です。研究でも実務でも、ログ前処理の定番として広く使われています。</p></dd></div>
   <div><dt>Drain3<small>Python ライブラリ</small></dt><dd><p>Drainを実用向けに拡張したPythonのオープンソース実装です。<code>pip install drain3</code> で導入できます。主な機能は、正規表現によるマスキング（IPや数値を <code>&lt;IP&gt;</code> <code>&lt;NUM&gt;</code> に置換）、学習した状態のファイル等への保存、類似度のしきい値などの設定です。本ガイドの案1で、テンプレート集計に使います。</p></dd></div>
-  <div><dt>マスキング<small>masking</small></dt><dd><p>本ガイドでは2つの意味で使っています。1つはテンプレート化のために変わる値を記号に置き換えること、もう1つは顧客情報を外部に出さないために値を置き換えることです。同じ仕組みで両方を実現できます。</p></dd></div>
+  <div><dt>マスキング<small>masking</small></dt><dd><p>本ガイドでは2つの意味で使っています。1つはテンプレート化のために変わる値を記号に置き換えること（案1で行う）、もう1つは顧客情報を外部に出さないために値を置き換えること（ログ収集の段階で行う）です。</p></dd></div>
   <div><dt>DuckDB<small>組み込み型の分析用DB</small></dt><dd><p>サーバを立てずにアプリケーションの中で動く、分析向けのSQLデータベースです。SQLiteの分析版と考えると分かりやすいです。Pythonから <code>import duckdb</code> だけで使え、CSV・JSON・Parquetファイルを直接SQLで読めます。大量の行の集計が速く、障害1件ごとに1ファイルのDBを作って捨てる使い方に向いています。ライセンスはMITです。</p></dd></div>
-  <div><dt>Parquet<small>列指向ファイル形式</small></dt><dd><p>表形式のデータを列ごとに圧縮して保存するファイル形式です。CSVより小さく、必要な列だけを速く読めます。案1でパースした結果をParquetで保存しておくと、DuckDBへの取り込みが簡単になります。</p></dd></div>
+  <div><dt>Parquet<small>列指向ファイル形式</small></dt><dd><p>表形式のデータを列ごとに圧縮して保存するファイル形式です。CSVより小さく、必要な列だけを速く読めます。DuckDBへの取り込み元に向いています。本ガイドの実装では、案1がDuckDBに依存しないよう、取り込み元をJSON Lines（gzip）にしました。</p></dd></div>
   <div><dt>AIエージェント<small>agent</small></dt><dd><p>AIが一度で答えを出すのではなく、「考える → ツールを使う → 結果を見て次を考える」を繰り返して課題を解く使い方です。案2の調査の流れがその例です。</p></dd></div>
   <div><dt>ツール呼び出し<small>tool use / function calling</small></dt><dd><p>AIが、あらかじめ定義された関数（検索、SQL実行など）を引数付きで呼び出す仕組みです。AIは結果のテキストだけを受け取るので、ツール側で返す量を制御できます。</p></dd></div>
   <div><dt>Skills<small>Agent Skills</small></dt><dd><p>AIに特定の作業のやり方を教えるための、説明文（SKILL.md）とスクリプトをまとめたフォルダです。AIは作業に関係するときだけ中身を読み込みます。既存の一次調査でディレクトリ地図を渡しているのと同じ仕組みで、ログ検索の手順とコマンドを渡せます。</p></dd></div>
   <div><dt>MCP<small>Model Context Protocol</small></dt><dd><p>AIアプリケーションと外部のツールやデータをつなぐためのオープンな仕様で、2024年にAnthropicが公開しました。ツールをMCPサーバとして作ると、対応する複数のAIクライアント（VS Codeの拡張、自動実行のエージェントなど）から同じ形で呼べます。</p></dd></div>
-  <div><dt>RAG<small>Retrieval-Augmented Generation</small></dt><dd><p>AIに質問する前に、関係する文書や事例を検索して一緒に渡す手法です。案3の過去障害シグネチャの照合はRAGの一種です。</p></dd></div>
+  <div><dt>RAG<small>Retrieval-Augmented Generation</small></dt><dd><p>AIに質問する前に、関係する文書や事例を検索して一緒に渡す手法です。案3の過去障害シグネチャの照合（後回し）はRAGの一種です。</p></dd></div>
   <div><dt>トークン・コンテキストウィンドウ<small>token / context window</small></dt><dd><p>トークンはAIが文章を処理する単位で、英数字のログ1行はおよそ数十トークンになります。コンテキストウィンドウは、AIが一度に扱える入力の上限です。上限内に収まっても、入力が長いほど費用と時間が増え、重要な情報が埋もれて精度が下がりやすくなります。</p></dd></div>
   <div><dt>時間窓<small>time window</small></dt><dd><p>分析の対象にする時間の範囲です。障害の発生時刻の前後に絞ることで、ログ量を大きく減らせます。原因が窓の外にある場合に備え、案2のツールで窓の外も調べられるようにしておきます。</p></dd></div>
-  <div><dt>ベースライン差分<small>baseline diff</small></dt><dd><p>正常時のログ（ベースライン）と障害時のログを比べ、増えたもの・減ったもの・新しく出たもの・消えたものを取り出す方法です。案3の中心となる考え方です。</p></dd></div>
+  <div><dt>平常プロファイル・平常期間<small>baseline</small></dt><dd><p>同じ環境の、正常に動いていたと思われる期間（平常期間）のログの特徴です。障害時と比べ、増えたもの・減ったもの・新しく出たもの・消えたものを取り出します（ベースライン差分）。本ガイドでは案1で行います。</p></dd></div>
+  <div><dt>変化点<small>change point</small></dt><dd><p>テンプレートごとの日別件数を並べたとき、「ある日から出始めた（出現）」「ある日から消えた（消失）」日のことです。少しずつ進む障害の発端を見つけるのに使います。</p></dd></div>
+  <div><dt>既知ノイズ<small>known noise</small></dt><dd><p>平常時から出ているWARN／ERRORで、動作に影響がないと分かっているものです。本ガイドでは再現環境のログとソースコードからAIが辞書を作り（案3）、ダイジェストでは除外せず下に回します（案1）。</p></dd></div>
+  <div><dt>再現環境<small>検証環境</small></dt><dd><p>社内で製品を動かして試験や障害の再現を行う環境です。正常に動いていたと分かっている期間のログが手に入るので、既知ノイズ辞書の元にします。障害を再現した期間は含めません。</p></dd></div>
   <div><dt>相関ID<small>correlation ID</small></dt><dd><p>1つの処理（1つの印刷ジョブ、1つの要求など）に付ける共通のIDで、その処理に関わるすべてのログに出力します。複数のプロセスやサーバにまたがる処理を1回の検索で追えるようになります。</p></dd></div>
   <div><dt>構造化ログ・JSON Lines<small>structured logging</small></dt><dd><p>ログを自由な文章ではなく、項目名の付いたデータとして出す方式です。1行に1つのJSONを書く形式をJSON Linesと呼びます。パースが不要になり、DuckDBでもそのまま読めます。</p></dd></div>
   <div><dt>階層要約<small>map-reduce summarization</small></dt><dd><p>大きなログを分割してそれぞれAIに要約させ、要約同士をさらに要約する方法です。手軽ですが、途中の要約で重要な1行が落ちる危険があるため、本ガイドでは主な手段にしていません。</p></dd></div>
@@ -686,14 +766,14 @@ miner = TemplateMiner(config=config)
 <h2 id="refs">付録B 参考文献</h2>
 <p class="h2-sub">本ガイドの考え方の根拠にした研究・事例です。</p>
 <ul class="refs">
-  <li><a href="https://arxiv.org/html/2506.03691v2">LogSage: An LLM-Based Framework for CI/CD Failure Detection and Remediation</a>：キーワード一致、末尾優先、成功時ログとの差分で候補行を絞ってからLLMに渡す（案1・案3）</li>
+  <li><a href="https://arxiv.org/html/2506.03691v2">LogSage: An LLM-Based Framework for CI/CD Failure Detection and Remediation</a>：キーワード一致、末尾優先、成功時ログとの差分で候補行を絞ってからLLMに渡す（案1）</li>
   <li><a href="https://arxiv.org/html/2511.14803v1">Scalable and Efficient Large-Scale Log Analysis with LLMs: An IT Software Support Case Study</a>：テンプレート化で代表行に絞ってからLLMで分析するIBMの事例（案1）</li>
   <li><a href="https://www.alphaxiv.org/audio/2602.08804v1">RC-LLM: Root Cause Analysis Method Based on LLMs with Residual Connection Structures</a>：生ログを直接渡さず、障害シグナルを先に抽出する設計（案1）</li>
   <li><a href="https://arxiv.org/html/2509.15635v1">MicroRCA-Agent</a>：Drainによるテンプレート抽出とルールで大量のログを障害特徴に圧縮（案1）</li>
   <li><a href="https://torq.io/blog/multi-agent-security-investigation/">Stop Feeding Logs to LLMs (Torq)</a>：専用ツールで絞り込ませる方が、ログをそのまま渡すより有効だった事例（案2）</li>
   <li><a href="https://www.greptime.com/blogs/2026-09-08-agent-rca-bench-interface-semantic-layer">Agent RCA Bench (Greptime)</a>：同じモデルでも、問い合わせ手段をSQLにすると誤診断と入力量が減った比較（案2）</li>
-  <li><a href="https://arxiv.org/pdf/2608.21310">Beyond Fault Localization: A Trajectory-Level Study of LLM Agents for Microservice RCA</a>：正常期間との比較を検証手順に組み込み、慢性的なエラーを原因から除外（案3）</li>
-  <li><a href="https://zbchern.github.io/papers/fse25a.pdf">L4: Diagnosing Large-scale LLM Training Failures via Automated Log Analysis</a>：障害を示すログが低頻度とは限らないという分析（案3）</li>
+  <li><a href="https://arxiv.org/pdf/2608.21310">Beyond Fault Localization: A Trajectory-Level Study of LLM Agents for Microservice RCA</a>：正常期間との比較を検証手順に組み込み、慢性的なエラーを原因から除外（案1 平常時との比較）</li>
+  <li><a href="https://zbchern.github.io/papers/fse25a.pdf">L4: Diagnosing Large-scale LLM Training Failures via Automated Log Analysis</a>：障害を示すログが低頻度とは限らないという分析（案1 平常時との比較）</li>
   <li><a href="https://github.com/copyleftdev/tailx">tailx (GitHub)</a>：Drainによるテンプレート集約で数万行を数十種類に縮める実装例（案1）</li>
   <li><a href="https://www.splunk.com/en_us/blog/learn/log-file-analysis-llms.html">How to Use LLMs for Log File Analysis (Splunk)</a>：チャンク分割と階層要約の一般的な手順（付録A 階層要約）</li>
 </ul>
