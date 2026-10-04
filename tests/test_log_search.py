@@ -120,8 +120,11 @@ class LogSearchTest(unittest.TestCase):
     def test_guide_example_cleanup_sql(self):
         out = run_sql(self.ctx, "SELECT ts, component, message FROM logs WHERE component = 'cleanup' "
                                 "ORDER BY ts DESC LIMIT 5")
-        self.assertIn("run_sql: 3 行", out)
+        self.assertIn("run_sql: 5 行", out)
         self.assertIn("2026-09-28 03:00:01.000\tcleanup\tTemp cleanup skipped: scheduled task disabled", out)
+        # 9/23 までは正常に完了していた
+        first = run_sql(self.ctx, "SELECT max(ts) FROM logs WHERE message LIKE 'Temp cleanup finished%'")
+        self.assertIn("2026-09-23 03:00:01", first)
 
     # ---- 上限 ----
 

@@ -14,6 +14,7 @@ from typing import Dict, List, Optional
 import yaml
 
 from . import __version__
+from . import baseline as baseline_mod
 from .export import write_parsed
 from .extract import aggregate_window, build_blocks, select_blocks, select_window
 from .noise import apply_noise, load_entries
@@ -25,6 +26,8 @@ from .templating import mine_templates
 
 SKILL_DIR = Path(__file__).resolve().parents[2]
 CONFIG_DIR = SKILL_DIR / "config"
+# 既知ノイズ辞書は log-knowledge skill が作り、ワークスペースの knowledge/ に置く（log-digest は読むだけ）
+DEFAULT_KNOWN_NOISE = Path("knowledge") / "known_noise.yaml"
 
 # 未解釈行がこの割合を超えたら書式設定の見直しを促す
 UNPARSED_WARN_RATIO = 0.05
@@ -59,11 +62,21 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--first-errors", type=int, default=3, help="ダイジェストに載せる最初の ERROR の件数（既定 3）")
     g.add_argument("--max-tokens", type=int, default=5000, help="ダイジェストの目標トークン数（既定 5000）")
 
+    g = p.add_argument_group("平常期間との比較")
+    g.add_argument("--baseline", action="append", default=[], metavar="DATE|START/END|none",
+                   help="平常期間を指定する（既定: 規則で自動選択）。日付（'2026-09-23'）ならその日の時間窓と同じ時刻帯、"
+                        "範囲（'2026-09-30 08:00/2026-09-30 10:00'）ならその範囲。複数指定すると平均と比べる。"
+                        "none で比較しない")
+    g.add_argument("--baseline-reason", help="--baseline でその期間を選んだ理由（ダイジェストに載る）")
+    g.add_argument("--baseline-config", type=Path, default=CONFIG_DIR / "baseline.yaml",
+                   help="平常期間との比較のしきい値")
+
     g = p.add_argument_group("設定と出力")
     g.add_argument("--out", help="出力ディレクトリ（既定: ./log-digest-out/<チケット>）")
     g.add_argument("--formats", type=Path, default=CONFIG_DIR / "log_formats.yaml")
     g.add_argument("--drain-config", type=Path, default=CONFIG_DIR / "drain3.ini")
-    g.add_argument("--known-noise", type=Path, default=CONFIG_DIR / "known_noise.yaml")
+    g.add_argument("--known-noise", type=Path, default=DEFAULT_KNOWN_NOISE,
+                   help=f"既知ノイズ辞書（既定: {DEFAULT_KNOWN_NOISE.as_posix()}。無ければ使わない）")
     g.add_argument("--no-known-noise", action="store_true", help="既知ノイズ辞書を使わない")
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     return p
@@ -112,6 +125,8 @@ def run(argv: Optional[List[str]] = None) -> int:
         noise_entries = load_entries(_load_yaml(args.known_noise))
         noise_file = args.known_noise.name
     offsets = _parse_offsets(args.clock_offset)
+    baseline_cfg = baseline_mod.load_config(
+        _load_yaml(args.baseline_config) if args.baseline_config.is_file() else None)
 
     incident = parse_timestamp(args.incident_time if args.incident_time.count(":") >= 2
                                else args.incident_time + ":00", None, out_tz)
@@ -120,6 +135,11 @@ def run(argv: Optional[List[str]] = None) -> int:
     after = args.after_minutes if args.after_minutes is not None else args.window_minutes
     start = incident - timedelta(minutes=before)
     end = incident + timedelta(minutes=after)
+    baseline_off = [b for b in args.baseline if b.strip().lower() == "none"]
+    if baseline_off and len(baseline_off) != len(args.baseline):
+        raise ValueError("--baseline none と期間の指定は同時に使えません")
+    manual_periods = (baseline_mod.parse_baseline_specs(args.baseline, start, end, out_tz)
+                      if args.baseline and not baseline_off else None)
 
     warnings: List[str] = []
 
@@ -151,6 +171,12 @@ def run(argv: Optional[List[str]] = None) -> int:
     aggregate_window(window, templates)
     for st in stats_list:
         st.window_records = sum(1 for r in window if r.file == st.file)
+
+    # 平常期間との比較と変化点。既知ノイズでも今回だけ様子が違うものは、ここでノイズ扱いをやめる
+    base = baseline_mod.build(records, templates, incident, start, end, baseline_cfg,
+                              manual=manual_periods, manual_reason=args.baseline_reason,
+                              disabled=bool(baseline_off))
+    warnings.extend(base.warnings)
     stream = [r for r in window if not templates[r.template_key].is_noise]
 
     # 4. エラー抽出と前後の文脈
@@ -192,6 +218,7 @@ def run(argv: Optional[List[str]] = None) -> int:
     d.templates = templates
     d.blocks_all, d.blocks = blocks_all, blocks
     d.noise_file = noise_file
+    d.baseline = base
     d.warnings = warnings
 
     renderer = Renderer(d)
@@ -225,6 +252,8 @@ def run(argv: Optional[List[str]] = None) -> int:
     except Exception:  # noqa: BLE001
         drain3_version = "unknown"
     config_files = [args.formats, args.drain_config] + ([args.known_noise] if noise_file else [])
+    if args.baseline_config.is_file():
+        config_files.append(args.baseline_config)
     meta = {
         "tool": f"log-digest {__version__}",
         "drain3": drain3_version,
@@ -242,6 +271,7 @@ def run(argv: Optional[List[str]] = None) -> int:
         "records": {"total": len(records), "window": len(window), "window_after_noise": len(stream)},
         "templates": {"total": len(templates), "window": sum(1 for t in templates.values() if t.count)},
         "blocks": {"extracted": len(blocks_all), "written": len(blocks)},
+        "baseline": base.to_dict(),
         "digest_tokens_estimate": tokens,
         "parsed": parsed,
         "warnings": warnings,
@@ -252,7 +282,8 @@ def run(argv: Optional[List[str]] = None) -> int:
     print(f"context:   {out_dir / DIGEST_CONTEXT_FILE}  (塊 {len(blocks)}/{len(blocks_all)})")
     print(f"templates: {out_dir / TEMPLATES_FILE}")
     print(f"parsed:    {out_dir / parsed['records']}  (log-search の取り込み元)")
-    print(f"records:   全期間 {len(records):,} / 窓内 {len(window):,} / ノイズ除外後 {len(stream):,}")
+    print(f"records:   全期間 {len(records):,} / 窓内 {len(window):,} / 既知ノイズを下に回した後 {len(stream):,}")
+    print(f"baseline:  {', '.join(p.label for p in base.periods) or 'なし'}（{base.reason}）")
     for w in warnings:
         print(f"warning:   {w}")
     return 0

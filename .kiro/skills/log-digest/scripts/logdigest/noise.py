@@ -1,4 +1,8 @@
-"""既知ノイズ辞書（案3の受け口）。テンプレートと照合して除外理由を付ける。"""
+"""既知ノイズ辞書との照合。一致したテンプレートに理由を付け、ダイジェストの下に回す。
+
+辞書（knowledge/known_noise.yaml）は log-knowledge skill が作る。照合規則を変えたら、
+log-knowledge の noise.py（pattern_to_regex）も合わせて直すこと。
+"""
 
 from __future__ import annotations
 
@@ -35,7 +39,7 @@ class NoiseEntry:
         if not str(raw.get("reason") or "").strip():
             raise ValueError(
                 f"known_noise の {index + 1} 件目（{raw['template']!r}）に reason がありません。"
-                "理由のない除外は登録できません")
+                "理由のない登録はできません")
         self.template = str(raw["template"])
         self.reason = str(raw["reason"]).strip()
         versions = raw.get("versions") or ["*"]

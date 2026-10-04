@@ -15,8 +15,9 @@ from .parsing import Record
 class Template:
     """テンプレート1種類と、その件数・時刻の集計。"""
 
-    def __init__(self, tid: str, text: str):
+    def __init__(self, tid: str, text: str, key: int = 0):
         self.id = tid
+        self.key = key  # Drain3 のクラスタID（records の template_key と同じ）
         self.text = text
         self.total_count = 0
         self.total_first: Optional[datetime] = None
@@ -31,10 +32,13 @@ class Template:
         self.trigger_count = 0
         self.components: Dict[str, int] = {}
         self.noise_reason: Optional[str] = None
+        # 既知ノイズでも、今回だけ様子が違う（急増・新たに出現）のでノイズ扱いをやめた理由
+        self.noise_suspended: Optional[str] = None
 
     @property
     def is_noise(self) -> bool:
-        return self.noise_reason is not None
+        """既知ノイズとして下に回すか。辞書に一致し、かつ今回だけ様子が違うわけではないもの。"""
+        return self.noise_reason is not None and self.noise_suspended is None
 
     def add_total(self, r: Record) -> None:
         self.total_count += 1
@@ -88,7 +92,7 @@ def mine_templates(records: List[Record], ini_path: Path) -> Dict[int, Template]
     clusters = {c.cluster_id: c for c in miner.drain.clusters}
     width = max(2, len(str(len(first_seen))))
     templates = {
-        cid: Template(f"T{n:0{width}d}", clusters[cid].get_template())
+        cid: Template(f"T{n:0{width}d}", clusters[cid].get_template(), cid)
         for n, cid in enumerate(first_seen, start=1)
     }
     for r in records:

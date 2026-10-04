@@ -217,7 +217,7 @@ def search_logs(ctx: Ctx, query: Sequence[str] = (), regex: bool = False, level:
         cond.append("template=" + ",".join(tids))
     if exclude_noise:
         where.append("NOT noise")
-        cond.append("既知ノイズ除外")
+        cond.append("既知ノイズを除く")
     w = (" WHERE " + " AND ".join(where)) if where else ""
     direction = "DESC" if order == "desc" else "ASC"
 

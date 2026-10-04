@@ -1,6 +1,9 @@
 """ガイドの架空障害 INC-2026-0931 を模したログ一式を生成する（テスト・動作確認用）。
 
+期間:     2026-09-16（水）0:00 〜 09-30（水）12:00 の約14日半。土日（9/19-20, 9/26-27）は印刷ジョブが少ない。
 真の原因: 一時ファイル削除タスクが 9/24 から無効 → スプール領域が埋まり 9/30 10:42:05 に容量不足。
+          9/23 までは毎日 3:00 に「Temp cleanup finished」、9/24 からは「Temp cleanup skipped」が出る。
+          スプール使用率の警告は 80% を超えた 9/28 から出る。
 ノイズ:   LDAP referral ignored（平常時から WARN）、SNMP trap send failed（平常時から ERROR）。
 二次症状: 10:42 以降の DB 接続待ち。
 
@@ -21,7 +24,8 @@ from pathlib import Path
 from typing import List, Tuple
 
 JST = timezone(timedelta(hours=9))
-START = datetime(2026, 9, 28, 0, 0, 0)
+START = datetime(2026, 9, 16, 0, 0, 0)
+CLEANUP_DISABLED = datetime(2026, 9, 24)
 INCIDENT = datetime(2026, 9, 30, 10, 42, 5, 907000)
 END = datetime(2026, 9, 30, 12, 0, 0)
 
@@ -52,13 +56,18 @@ def _pms_server() -> List[str]:
             add(t + timedelta(seconds=1), "ERROR", "snmp", "SNMP trap send failed: 192.168.10.5 timeout")
         # 毎日 3時の定期処理: 削除タスクは無効、使用率が単調増加
         if t.hour == 3 and t.minute == 0:
-            day = (t - START).days
-            add(t + timedelta(seconds=1), "WARN", "cleanup", "Temp cleanup skipped: scheduled task disabled")
-            add(t + timedelta(seconds=10), "WARN", "spool", f"Spool usage {[81, 88, 95][day]}% on D:")
-        # 印刷ジョブ（2分ごと）。障害後は失敗する
-        if t.minute % 2 == 0:
+            if t < CLEANUP_DISABLED:
+                add(t + timedelta(seconds=1), "INFO", "cleanup",
+                    f"Temp cleanup finished: {300 + t.day * 7} files removed")
+            else:
+                add(t + timedelta(seconds=1), "WARN", "cleanup", "Temp cleanup skipped: scheduled task disabled")
+            usage = {28: 81, 29: 88, 30: 95}.get(t.day)
+            if usage:
+                add(t + timedelta(seconds=10), "WARN", "spool", f"Spool usage {usage}% on D:")
+        # 印刷ジョブ（平日は2分ごと、土日は30分ごと）。障害後は失敗する
+        if t.minute % (30 if t.weekday() >= 5 else 2) == 0:
             n += 1
-            job = f"J-{20000 + n}"
+            job = f"J-{10000 + n}"
             user, host = USERS[n % 3]
             dt = t + timedelta(seconds=n % 50, microseconds=112000)
             add(dt, "INFO", f"job-worker-{n % 4}",

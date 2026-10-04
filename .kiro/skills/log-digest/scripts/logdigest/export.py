@@ -63,7 +63,8 @@ def write_parsed(out_dir: Path, records: List[Record], templates: Dict[int, Temp
                 "window_count": t.count,
                 "window_first": _iso(t.first),
                 "window_last": _iso(t.last),
-                "noise_reason": t.noise_reason,
+                # 今回ノイズ扱いをやめたもの（急増・出現）は、log-search でも通常のログとして扱う
+                "noise_reason": t.noise_reason if t.is_noise else None,
                 "template": t.text,
             }
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
