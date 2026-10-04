@@ -1,0 +1,39 @@
+# 各ツールが返す量の上限
+#
+# 【仮】ガイド（docs/log-rca-ai-guide.html「案2 ツールの例」）の値をそのまま使っています。
+# 実ログと評価セットで、AIのコンテキストを圧迫しすぎないか・足りないかを見て調整してください
+# （README「残作業」参照）。コマンドの引数でこの値より大きくすることはできません。
+
+common:
+  msg_chars: 300           # 1行のメッセージを何文字で切るか
+  memory_limit: "1GB"      # DuckDB が使うメモリの上限
+  threads: 2
+
+get_digest:
+  max_chars: 20000         # ダイジェスト（約5,000トークン）を返す。これを超えた分は切る
+
+search_logs:
+  max_lines: 200           # 一致がこれ以下なら全件を返す
+  overflow_lines: 20       # 超えたら件数と先頭この行数だけを返す
+  overflow_templates: 10   # 超えたときに付けるテンプレート別内訳の行数
+
+get_context:
+  default_before: 10
+  default_after: 10
+  max_before: 50
+  max_after: 50
+  target_extra_lines: 60   # 対象の行に続くスタックトレース等を何行まで出すか
+  default_extra_lines: 3   # 前後の行に続く行を何行まで出すか
+  max_extra_lines: 10
+
+template_lines:
+  max_lines: 20
+
+count_by_time:
+  max_buckets: 120
+  max_templates: 8
+
+run_sql:
+  max_rows: 200
+  timeout_seconds: 30
+  cell_chars: 300

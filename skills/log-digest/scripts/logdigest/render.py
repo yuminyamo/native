@@ -268,8 +268,8 @@ class Renderer:
             remaining = len(r.extra) - lim.stack_lines + r.extra_dropped
             if remaining > 0:
                 where = self._block_of(r)
-                hint = f"{DIGEST_CONTEXT_FILE} の {where}" if where else f"元ファイル {r.line_id} 以降"
-                out.append(f"…（以下 {remaining} 行省略。全文は {hint} を参照）")
+                hint = f"get_context {r.line_id}" + (f"、または {DIGEST_CONTEXT_FILE} の {where}" if where else "")
+                out.append(f"…（以下 {remaining} 行省略。全文は {hint} で取得可）")
             out += ["```", ""]
         return out
 
@@ -285,16 +285,24 @@ class Renderer:
     def _howto_section(self) -> List[str]:
         d = self.d
         n_all, n_sel = len(d.blocks_all), len(d.blocks)
+        triggers = [r for r in d.stream if r.is_trigger]
+        example = triggers[0] if triggers else (d.stream[0] if d.stream else None)
+        line_id = example.line_id if example else "<ファイル:行番号>"
+        tid = d.templates[example.template_key].id if example else "<テンプレートID>"
         return [
             "## 省略した情報の確かめ方",
             "",
-            "このダイジェストは抽出・集計した結果であり、省略した箇所がある。省略箇所を推測で埋めず、次で確かめること。",
+            "このダイジェストは抽出・集計した結果であり、省略した箇所がある。省略箇所を推測で埋めず、"
+            "log-search skill のツールで確かめること（全期間の全レコードを検索でき、時間窓の外も調べられる）。",
             "",
+            f"- 特定の行の前後: `get_context {line_id}`",
+            "- キーワード・レベル・時間範囲・ファイルで検索: `search_logs`",
+            f"- テンプレートの実際の行: `template_lines {tid}`",
+            f"- 件数の時間推移（いつから出ているか・消えたか）: `count_by_time {tid}`",
+            "- 上記で足りない集計: `run_sql`（読み取り専用）",
             f"- ERROR・例外の前後の文脈: {DIGEST_CONTEXT_FILE}（{n_sel} 個の塊。同じ ERROR の繰り返しだけの塊 "
             f"{n_all - n_sel} 個は省略）",
             f"- 窓内・全期間の全テンプレートの件数と初出・最終時刻: {TEMPLATES_FILE}",
-            "- 時間窓の外: `--window-minutes`（または `--before-minutes` / `--after-minutes`）を広げて再実行する",
-            "- 根拠の行そのもの: 生ログの `@ファイル:行番号` の前後に範囲を絞って読む（全文は読まない）",
             "- 根拠としてログを挙げるときは、時刻と `@ファイル:行番号` を付ける",
         ]
 

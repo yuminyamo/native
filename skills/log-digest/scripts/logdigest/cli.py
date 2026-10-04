@@ -1,4 +1,4 @@
-"""コマンドライン: ログ一式 → digest_<チケット>.md / context.md / templates.tsv / meta.json"""
+"""コマンドライン: ログ一式 → digest_<チケット>.md / context.md / templates.tsv / meta.json / parsed/"""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from typing import Dict, List, Optional
 import yaml
 
 from . import __version__
+from .export import write_parsed
 from .extract import aggregate_window, build_blocks, select_blocks, select_window
 from .noise import apply_noise, load_entries
 from .parsing import (collect_files, file_alias, load_formats, parse_file, parse_timestamp,
@@ -215,6 +216,8 @@ def run(argv: Optional[List[str]] = None) -> int:
     digest_path.write_text(digest, encoding="utf-8")
     (out_dir / DIGEST_CONTEXT_FILE).write_text(renderer.context(), encoding="utf-8")
     (out_dir / TEMPLATES_FILE).write_text(renderer.templates_tsv(), encoding="utf-8")
+    # 案2 log-search の取り込み元（全期間の全レコード）
+    parsed = write_parsed(out_dir, records, templates)
 
     try:
         from importlib.metadata import version as pkg_version
@@ -227,6 +230,10 @@ def run(argv: Optional[List[str]] = None) -> int:
         "drain3": drain3_version,
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "ticket": args.ticket,
+        "product": args.product,
+        "product_version": args.product_version,
+        "os": args.os_name,
+        "symptom": args.symptom,
         "incident_time": incident.isoformat(sep=" "),
         "timezone": tz_spec,
         "window": {"start": start.isoformat(sep=" "), "end": end.isoformat(sep=" ")},
@@ -236,6 +243,7 @@ def run(argv: Optional[List[str]] = None) -> int:
         "templates": {"total": len(templates), "window": sum(1 for t in templates.values() if t.count)},
         "blocks": {"extracted": len(blocks_all), "written": len(blocks)},
         "digest_tokens_estimate": tokens,
+        "parsed": parsed,
         "warnings": warnings,
     }
     (out_dir / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -243,6 +251,7 @@ def run(argv: Optional[List[str]] = None) -> int:
     print(f"digest:    {digest_path}  (約 {tokens} トークン)")
     print(f"context:   {out_dir / DIGEST_CONTEXT_FILE}  (塊 {len(blocks)}/{len(blocks_all)})")
     print(f"templates: {out_dir / TEMPLATES_FILE}")
+    print(f"parsed:    {out_dir / parsed['records']}  (log-search の取り込み元)")
     print(f"records:   全期間 {len(records):,} / 窓内 {len(window):,} / ノイズ除外後 {len(stream):,}")
     for w in warnings:
         print(f"warning:   {w}")

@@ -21,6 +21,8 @@ class Template:
         self.total_count = 0
         self.total_first: Optional[datetime] = None
         self.total_last: Optional[datetime] = None
+        self.total_max_severity = -1
+        self.total_level = ""  # 全期間で最も重いレベル（level は時間窓内）
         self.count = 0  # 時間窓内
         self.first: Optional[datetime] = None
         self.last: Optional[datetime] = None
@@ -40,6 +42,9 @@ class Template:
             self.total_first = r.ts
         if self.total_last is None or r.ts > self.total_last:
             self.total_last = r.ts
+        if r.severity > self.total_max_severity:
+            self.total_max_severity = r.severity
+            self.total_level = r.level
 
     def add_window(self, r: Record) -> None:
         self.count += 1
