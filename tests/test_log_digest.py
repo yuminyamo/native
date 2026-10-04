@@ -18,7 +18,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from incident_fixture import KNOWN_NOISE_YAML, write_incident_logs  # noqa: E402
 from logdigest import cli  # noqa: E402
 from logdigest.extract import build_blocks, select_blocks  # noqa: E402
-from logdigest.masking import Masker  # noqa: E402
 from logdigest.noise import load_entries  # noqa: E402
 from logdigest.parsing import (LogFormat, Record, decode_bytes, file_alias,  # noqa: E402
                                parse_file, parse_timestamp)
@@ -34,10 +33,6 @@ def default_format() -> LogFormat:
     cfg = yaml.safe_load((CONFIG / "log_formats.yaml").read_text(encoding="utf-8"))
     aliases = {str(k).upper(): str(v).upper() for k, v in cfg["level_aliases"].items()}
     return LogFormat(cfg["formats"][0], cfg["defaults"], aliases)
-
-
-def default_masker() -> Masker:
-    return Masker.from_config(yaml.safe_load((CONFIG / "masking.yaml").read_text(encoding="utf-8")))
 
 
 class ParsingTest(unittest.TestCase):
@@ -78,29 +73,6 @@ class ParsingTest(unittest.TestCase):
         self.assertEqual(st.unparsed_lines, 1)
         self.assertEqual(st.unknown_levels, {"XYZ": 1})
         self.assertEqual(recs[0].ts, datetime(2026, 9, 30, 9, 59, 58))
-
-
-class MaskingTest(unittest.TestCase):
-    def test_consistent_tokens(self):
-        m = default_masker()
-        a = m.mask('Job received user=tanaka host=PC-SALES-012 document="見積書.xlsx"')
-        b = m.mask("ログイン成功 ユーザー：Tanaka mail=tanaka@corp-a.co.jp from 10.1.2.3")
-        self.assertEqual(a, 'Job received user=<USER_001> host=<HOST_001> document="<DOC_001>"')
-        self.assertEqual(b, "ログイン成功 ユーザー：<USER_001> mail=<MAIL_001> from <IP_001>")
-
-    def test_hosts_and_paths(self):
-        m = default_masker()
-        out = m.mask(r"LDAP referral ignored: ldap://dc2.corp-a.local open \\FS01\share C:\Users\suzuki\a.txt")
-        self.assertNotIn("corp-a", out)
-        self.assertNotIn("FS01", out)
-        self.assertNotIn("suzuki", out)
-        # 置換済みの記号を二重に置き換えない
-        self.assertEqual(m.mask("host=<HOST_001>"), "host=<HOST_001>")
-
-    def test_mapping(self):
-        m = default_masker()
-        m.mask("user=tanaka")
-        self.assertEqual(m.mapping(), {"USER": {"<USER_001>": "tanaka"}})
 
 
 class NoiseTest(unittest.TestCase):
@@ -154,8 +126,7 @@ class EndToEndTest(unittest.TestCase):
         cls.noise.write_text(KNOWN_NOISE_YAML, encoding="utf-8")
         cls.out = base / "out"
         cls.out2 = base / "out2"
-        cls.mask_map = base / "secret" / "mask_map.json"
-        cls.stdout = cls._run(cls.out, "--save-mask-map", str(cls.mask_map))
+        cls.stdout = cls._run(cls.out)
         cls._run(cls.out2)
         cls.digest = (cls.out / "digest_INC-2026-0931.md").read_text(encoding="utf-8")
         cls.context = (cls.out / "context.md").read_text(encoding="utf-8")
@@ -171,7 +142,7 @@ class EndToEndTest(unittest.TestCase):
         with redirect_stdout(buf):
             rc = cli.run([
                 "--ticket", "INC-2026-0931", "--incident-time", "2026-09-30 10:40",
-                "--symptom", "10:40頃から印刷ジョブが出力されない（user=tanaka から申告）",
+                "--symptom", "10:40頃から印刷ジョブが出力されない",
                 "--product", "PMS", "--product-version", "5.2.3", "--os", "Windows Server 2019",
                 "--logs", str(cls.logs), "--known-noise", str(cls.noise), "--out", str(out), *extra])
         assert rc == 0
@@ -196,19 +167,11 @@ class EndToEndTest(unittest.TestCase):
         # 窓内は1件だが、全期間では 09-28 から出ている
         self.assertIn("09-28 03:00:10", row)
 
-    def test_templates_group_across_users(self):
-        logins = [ln for ln in self.tsv.splitlines() if "ログイン成功" in ln]
-        self.assertEqual(len(logins), 1, logins)
-
-    def test_no_customer_data_in_outputs(self):
-        secrets = ["tanaka", "suzuki", "yamada", "PC-SALES", "PC-ACC", "corp-a", "見積書", "議事録",
-                   "請求書", "192.168.", "10.20.30.40"]
-        for f in self.out.iterdir():
-            text = f.read_text(encoding="utf-8").lower()
-            for s in secrets:
-                self.assertNotIn(s.lower(), text, f"{s} in {f.name}")
-        mapping = json.loads(self.mask_map.read_text(encoding="utf-8"))
-        self.assertIn("tanaka", mapping["USER"].values())
+    def test_messages_are_not_rewritten(self):
+        # マスキングはログ収集の skill で済んでいる前提なので、本文はそのまま載る
+        self.assertIn("host=PC-SALES-012", self.context)
+        self.assertIn("Polling server 10.20.30.40:8443 ok", self.context)
+        self.assertNotIn("マスキング", self.digest)
 
     def test_within_budget_and_deterministic(self):
         self.assertLessEqual(estimate_tokens(self.digest), 5000)

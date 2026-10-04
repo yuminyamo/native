@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -11,10 +10,6 @@ from drain3 import TemplateMiner
 from drain3.template_miner_config import TemplateMinerConfig
 
 from .parsing import Record
-
-# 顧客情報のマスク記号 <USER_001> は、テンプレート化では <USER> として扱う。
-# 番号のまま渡すと、ユーザーごとに別のテンプレートに分かれてしまう。
-_NUMBERED_TOKEN_RE = re.compile(r"<([A-Z][A-Z0-9]*)_\d{3,}>")
 
 
 class Template:
@@ -78,8 +73,7 @@ def mine_templates(records: List[Record], ini_path: Path) -> Dict[int, Template]
     first_seen: List[int] = []
     known = set()
     for r in records:
-        message = _NUMBERED_TOKEN_RE.sub(r"<\1>", r.message.strip()) or "<EMPTY>"
-        result = miner.add_log_message(message)
+        result = miner.add_log_message(r.message.strip() or "<EMPTY>")
         cid = result["cluster_id"]
         r.template_key = cid
         if cid not in known:

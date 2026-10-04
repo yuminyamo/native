@@ -15,7 +15,6 @@ import yaml
 
 from . import __version__
 from .extract import aggregate_window, build_blocks, select_blocks, select_window
-from .masking import Masker
 from .noise import apply_noise, load_entries
 from .parsing import (collect_files, file_alias, load_formats, parse_file, parse_timestamp,
                       parse_tz)
@@ -62,12 +61,9 @@ def build_parser() -> argparse.ArgumentParser:
     g = p.add_argument_group("設定と出力")
     g.add_argument("--out", help="出力ディレクトリ（既定: ./log-digest-out/<チケット>）")
     g.add_argument("--formats", type=Path, default=CONFIG_DIR / "log_formats.yaml")
-    g.add_argument("--masking", type=Path, default=CONFIG_DIR / "masking.yaml")
     g.add_argument("--drain-config", type=Path, default=CONFIG_DIR / "drain3.ini")
     g.add_argument("--known-noise", type=Path, default=CONFIG_DIR / "known_noise.yaml")
     g.add_argument("--no-known-noise", action="store_true", help="既知ノイズ辞書を使わない")
-    g.add_argument("--save-mask-map", type=Path,
-                   help="マスク記号と元の値の対応表を保存する（顧客情報を含む。AIが読む場所に置かないこと）")
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     return p
 
@@ -109,7 +105,6 @@ def run(argv: Optional[List[str]] = None) -> int:
     formats = load_formats(formats_cfg)
     tz_spec = args.tz or (formats_cfg.get("defaults") or {}).get("timezone", "+09:00")
     out_tz = parse_tz(tz_spec)
-    masker = Masker.from_config(_load_yaml(args.masking))
     noise_entries = []
     noise_file = None
     if not args.no_known_noise and args.known_noise.is_file():
@@ -143,13 +138,6 @@ def run(argv: Optional[List[str]] = None) -> int:
 
     # 2〜3. マージ（時刻順に1本へ）
     records.sort(key=lambda r: r.sort_key())
-
-    # 6. 顧客情報のマスキング（テンプレート化より前に、時刻順で行い記号の番号を決定的にする）
-    for r in records:
-        r.message = masker.mask(r.message)
-        if r.extra:
-            r.extra = [masker.mask(x) for x in r.extra]
-    symptom = masker.mask(args.symptom) if args.symptom else None
 
     # 5. テンプレート化（全期間で行い、窓の外での出現状況も分かるようにする）
     templates = mine_templates(records, args.drain_config)
@@ -191,7 +179,7 @@ def run(argv: Optional[List[str]] = None) -> int:
 
     d = DigestInput()
     d.ticket = args.ticket
-    d.product, d.version, d.os, d.symptom = args.product, args.product_version, args.os_name, symptom
+    d.product, d.version, d.os, d.symptom = args.product, args.product_version, args.os_name, args.symptom
     d.tz_label = tz_spec if tz_spec.startswith(("+", "-")) else f"{tz_spec}, {_fmt_offset(out_tz)}"
     d.incident, d.start, d.end = incident, start, end
     d.before_minutes, d.after_minutes = before, after
@@ -202,7 +190,6 @@ def run(argv: Optional[List[str]] = None) -> int:
     d.stream = stream
     d.templates = templates
     d.blocks_all, d.blocks = blocks_all, blocks
-    d.mask_summary = masker.summary()
     d.noise_file = noise_file
     d.warnings = warnings
 
@@ -234,7 +221,7 @@ def run(argv: Optional[List[str]] = None) -> int:
         drain3_version = pkg_version("drain3")
     except Exception:  # noqa: BLE001
         drain3_version = "unknown"
-    config_files = [args.formats, args.masking, args.drain_config] + ([args.known_noise] if noise_file else [])
+    config_files = [args.formats, args.drain_config] + ([args.known_noise] if noise_file else [])
     meta = {
         "tool": f"log-digest {__version__}",
         "drain3": drain3_version,
@@ -248,16 +235,10 @@ def run(argv: Optional[List[str]] = None) -> int:
         "records": {"total": len(records), "window": len(window), "window_after_noise": len(stream)},
         "templates": {"total": len(templates), "window": sum(1 for t in templates.values() if t.count)},
         "blocks": {"extracted": len(blocks_all), "written": len(blocks)},
-        "masking": masker.summary(),
         "digest_tokens_estimate": tokens,
         "warnings": warnings,
     }
     (out_dir / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-    if args.save_mask_map:
-        args.save_mask_map.parent.mkdir(parents=True, exist_ok=True)
-        args.save_mask_map.write_text(json.dumps(masker.mapping(), ensure_ascii=False, indent=2) + "\n",
-                                      encoding="utf-8")
 
     print(f"digest:    {digest_path}  (約 {tokens} トークン)")
     print(f"context:   {out_dir / DIGEST_CONTEXT_FILE}  (塊 {len(blocks)}/{len(blocks_all)})")

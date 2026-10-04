@@ -1,6 +1,6 @@
 ---
 name: log-digest
-description: 障害チケットで受領したログ一式（server / agent / db / auth など、数万〜数十万行）から、AIが最初に読む数千トークンのダイジェストを作る。障害の一次調査でログを調べる時は、生ログを直接読まずに必ずこのskillを最初に使う。Use when investigating an incident ticket with attached log files (log digest, root cause analysis, 障害調査, ログ解析).
+description: 障害チケットで受領したログ一式（server / agent / db / auth など、数万〜数十万行）から、AIが最初に読む数千トークンのダイジェストを作る。障害の一次調査でログを調べる時は、生ログを丸ごと読まずに必ずこのskillを最初に使う。Use when investigating an incident ticket with attached log files (log digest, root cause analysis, 障害調査, ログ解析).
 ---
 
 # log-digest: 障害ログのダイジェスト生成
@@ -13,8 +13,6 @@ description: 障害チケットで受領したログ一式（server / agent / db
 | `context.md` | ERROR・例外の前後の文脈（塊 E01, E02 …）。行番号付き |
 | `templates.tsv` | 時間窓内・全期間の全テンプレートの件数と初出・最終時刻 |
 | `meta.json` | 実行条件、入力ファイルの統計、設定ファイルのハッシュ |
-
-出力はすべて顧客情報（ユーザー名・PC名・文書名・IP・メール）をマスク済み。
 
 ## 1. 準備（初回のみ）
 
@@ -70,12 +68,12 @@ Windows では `.venv\Scripts\python <skill>\scripts\log_digest.py ...`。出力
    - ERROR前後の詳細: `context.md` の該当ブロック（E01 など）を読む
    - 特定のテンプレートの件数・時刻: `templates.tsv` を検索する
    - 時間窓の外（数日前からの変化など）: `--before-minutes 4320` のように窓を広げて再実行する
+   - 根拠の行そのもの: 生ログの `@ファイル:行番号` の前後（数十行程度）に範囲を絞って読む
 5. ダイジェストに「省略」と書かれた箇所を推測で埋めない。
 
 ## 5. 守ること
 
-- **生ログを直接開いたり全文を読んだりしない。** 生ログはマスクされていない。ログは必ずこのスクリプトの出力を通して読む。
-- `--save-mask-map` で保存する対応表は顧客情報そのもの。作る場合もワークスペースの外に置き、AIは読まない。
+- **生ログの全文を読まない。** 数十万行を読むとコンテキストを使い切り、重要な行が埋もれる。生ログを読むのは、行番号の分かっている箇所を範囲を絞って確かめる時だけにする。
 - 結論には根拠のログを `時刻` と `@ファイル:行番号` 付きで挙げる（例: `10:42:05.907 @pms-server.log:4414`）。
 - ERROR にならない異常（処理が黙って止まる等）はダイジェストに出にくい。ERROR が見当たらない時は WARN のテンプレートと、全期間初出・件数の変化を確認し、その旨を結論に書く。
 
@@ -84,7 +82,6 @@ Windows では `.venv\Scripts\python <skill>\scripts\log_digest.py ...`。出力
 | ファイル | 内容 |
 |---|---|
 | `log_formats.yaml` | ログ書式（正規表現）、文字コード、タイムゾーン、レベル表記のゆれ |
-| `masking.yaml` | 顧客情報のマスキング規則 |
 | `drain3.ini` | テンプレート化（Drain3）の設定と、変わる値（数値・パス・ID）の置き換え規則 |
 | `known_noise.yaml` | 既知ノイズ辞書。平常時から出るログを理由付きで登録する |
 

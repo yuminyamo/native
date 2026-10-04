@@ -72,7 +72,6 @@ class DigestInput:
         self.templates: Dict[int, Template] = {}
         self.blocks_all: List[Block] = []
         self.blocks: List[Block] = []
-        self.mask_summary: Dict[str, int] = {}
         self.noise_file: Optional[str] = None
         self.warnings: List[str] = []
 
@@ -143,11 +142,6 @@ class Renderer:
                    f"（申告時刻 -{d.before_minutes:g}分 / +{d.after_minutes:g}分）")
         names = ", ".join(f.file for f in d.files)
         out.append(f"対象: {names}（窓内 {_num(d.window_records)}行 / 全期間 {_num(d.total_records)}行）")
-        if d.mask_summary:
-            ms = ", ".join(f"{k} {v}種" for k, v in d.mask_summary.items())
-            out.append(f"マスキング: {ms}（<USER_001> などに置換済み。対応表はこの資料に含めない）")
-        else:
-            out.append("マスキング: 置換対象なし")
         out.append("")
 
         if d.warnings:
@@ -300,6 +294,7 @@ class Renderer:
             f"{n_all - n_sel} 個は省略）",
             f"- 窓内・全期間の全テンプレートの件数と初出・最終時刻: {TEMPLATES_FILE}",
             "- 時間窓の外: `--window-minutes`（または `--before-minutes` / `--after-minutes`）を広げて再実行する",
+            "- 根拠の行そのもの: 生ログの `@ファイル:行番号` の前後に範囲を絞って読む（全文は読まない）",
             "- 根拠としてログを挙げるときは、時刻と `@ファイル:行番号` を付ける",
         ]
 
@@ -309,7 +304,7 @@ class Renderer:
         d = self.d
         out = [f"# ERROR・例外の前後の文脈（{d.ticket}）", "",
                f"時間窓: {fmt_range(d.start, d.end)} / "
-               f"前後 {d.context_before}件・{d.context_after}件 / 既知ノイズは除外済み / 顧客情報はマスク済み",
+               f"前後 {d.context_before}件・{d.context_after}件 / 既知ノイズは除外済み",
                f"抽出した塊 {len(d.blocks_all)} 個のうち、新しい ERROR テンプレートを含む {len(d.blocks)} 個を載せる。",
                "書式: `時刻 テンプレートID レベル ファイル [コンポーネント] メッセージ @ファイル:行番号`、"
                "`>>` が ERROR・例外。", ""]
