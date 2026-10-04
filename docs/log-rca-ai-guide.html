@@ -1,0 +1,694 @@
+<title>障害ログAI調査ガイド</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap">
+<style>
+/* Layout: 技術ガイド。広い画面は左に目次、本文は1カラム。ログ行は蛍光ペンで印を付けた印刷物のように見せる */
+:root{
+  --bg:#f4f6f9; --surface:#ffffff; --fg:#18202c; --muted:#5b6678; --line:#d8dee7; --line-strong:#aab4c3;
+  --accent:#1d5aa6; --accent-soft:#e2ecf8; --mark:#fff0a0; --code-bg:#f0f3f7;
+  --ok:#2d7a4c; --ok-soft:#e3f2e9; --warn:#a86300; --warn-soft:#fbefdc; --bad:#b0281f; --bad-soft:#fbe5e3;
+  --f-display:"Zen Kaku Gothic New","Noto Sans JP","Hiragino Sans","Yu Gothic",sans-serif;
+  --f-body:"Noto Sans JP","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f131a; --surface:#161c25; --fg:#e5e9ef; --muted:#9ba6b6; --line:#28313d; --line-strong:#3f4a5a;
+  --accent:#7cb0ee; --accent-soft:#1a2a3f; --mark:#4d4413; --code-bg:#121821;
+  --ok:#6cc290; --ok-soft:#173027; --warn:#e5a84e; --warn-soft:#352812; --bad:#f07c73; --bad-soft:#3a1c1a;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f131a; --surface:#161c25; --fg:#e5e9ef; --muted:#9ba6b6; --line:#28313d; --line-strong:#3f4a5a;
+  --accent:#7cb0ee; --accent-soft:#1a2a3f; --mark:#4d4413; --code-bg:#121821;
+  --ok:#6cc290; --ok-soft:#173027; --warn:#e5a84e; --warn-soft:#352812; --bad:#f07c73; --bad-soft:#3a1c1a;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15.5px;line-height:1.85;padding-inline:16px;padding-block:0 64px}
+.shell{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1fr;gap:40px}
+@media (min-width:1040px){.shell{grid-template-columns:220px minmax(0,1fr)}}
+main{min-width:0;max-width:880px}
+
+/* 目次 */
+nav.toc{display:none}
+@media (min-width:1040px){
+  nav.toc{display:block;position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;padding-top:48px;font-size:13.5px;line-height:1.6}
+}
+nav.toc p{font-size:11.5px;letter-spacing:.12em;color:var(--muted);margin:0 0 10px;font-weight:700}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;border-left:1px solid var(--line)}
+nav.toc a{display:block;padding:4px 0 4px 14px;color:var(--muted);text-decoration:none;margin-left:-1px;border-left:2px solid transparent}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--fg);border-left-color:var(--accent);outline:none}
+nav.toc .sub a{padding-left:26px;font-size:12.5px}
+
+/* 見出し */
+header.hero{padding-block:48px 28px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;color:var(--accent);margin:0 0 10px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.35}
+h1{font-size:clamp(28px,4.4vw,40px);font-weight:900;margin:0 0 16px;letter-spacing:.01em}
+.lead{font-size:16.5px;max-width:42em;margin:0;color:var(--fg)}
+.meta{margin-top:18px;font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px}
+h2{font-size:clamp(22px,3vw,27px);font-weight:900;margin:64px 0 6px;scroll-margin-top:24px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+h2 .plan{font-family:var(--f-mono);font-size:13px;font-weight:500;color:var(--surface);background:var(--accent);padding:2px 9px;border-radius:3px;letter-spacing:.04em;transform:translateY(-3px)}
+.h2-sub{color:var(--muted);margin:0 0 22px;font-size:14.5px}
+h3{font-size:18px;font-weight:700;margin:36px 0 10px;scroll-margin-top:24px}
+h4{font-size:15px;margin:22px 0 6px}
+p{margin:0 0 14px;max-width:44em}
+ul,ol{margin:0 0 14px;padding-left:1.4em;max-width:44em}
+li{margin:3px 0}
+a{color:var(--accent)}
+strong{font-weight:700}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--code-bg);padding:1px 5px;border-radius:3px;border:1px solid var(--line)}
+
+/* 図 */
+figure{margin:22px 0 26px}
+.dg-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px}
+.dg-wrap svg{display:block;width:100%;height:auto;min-width:660px}
+figcaption{font-size:13px;color:var(--muted);margin-top:8px;max-width:48em}
+.dg text{fill:var(--fg);font-family:var(--f-body);font-size:13px}
+.dg .t-strong{font-weight:700;font-size:14px}
+.dg .t-sub{fill:var(--muted);font-size:11.5px}
+.dg .t-edge{fill:var(--muted);font-size:11.5px}
+.dg .t-tag{font-family:var(--f-mono);font-size:11px;fill:var(--accent);font-weight:500}
+.dg .box{fill:var(--bg);stroke:var(--line-strong);stroke-width:1.2}
+.dg .acc{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.6}
+.dg .dash{fill:none;stroke:var(--line-strong);stroke-width:1.2;stroke-dasharray:5 4}
+.dg .edge{fill:none;stroke:var(--muted);stroke-width:1.4}
+.dg .edge-acc{fill:none;stroke:var(--accent);stroke-width:1.6}
+.dg .ah{fill:var(--muted)}
+.dg .ah-acc{fill:var(--accent)}
+.dg .bar{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+.dg .bar-end{fill:var(--accent)}
+
+/* ラベル・チップ */
+.chip{display:inline-block;font-size:11.5px;font-weight:500;padding:1px 8px;border-radius:999px;line-height:1.7;white-space:nowrap;border:1px solid transparent}
+.chip.ex{background:var(--warn-soft);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
+.chip.new{background:var(--bad-soft);color:var(--bad)}
+.chip.up{background:var(--warn-soft);color:var(--warn)}
+.chip.down{background:var(--accent-soft);color:var(--accent)}
+.chip.same{background:var(--code-bg);color:var(--muted);border-color:var(--line)}
+.chip.noise{background:var(--ok-soft);color:var(--ok)}
+
+/* 例ブロック */
+.example{border:1px solid var(--line);border-radius:6px;background:var(--surface);margin:18px 0 22px}
+.example > .ex-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 14px;border-bottom:1px solid var(--line);font-size:13px;font-weight:700}
+.example > .ex-body{padding:14px}
+pre{margin:0;font-family:var(--f-mono);font-size:12.5px;line-height:1.7;background:var(--code-bg);border:1px solid var(--line);border-radius:4px;padding:12px 14px;overflow-x:auto;white-space:pre;color:var(--fg)}
+pre .hl{background:var(--mark);display:inline-block;min-width:100%}
+pre .dim{color:var(--muted)}
+pre .cm{color:var(--muted)}
+pre .kw{color:var(--accent);font-weight:500}
+.ex-note{font-size:13px;color:var(--muted);margin:10px 0 0}
+
+/* 表 */
+.tbl{overflow-x:auto;margin:14px 0 20px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.6}
+th,td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+th{font-size:12px;color:var(--muted);font-weight:700;background:var(--bg);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--f-mono);font-size:12.5px;white-space:nowrap}
+td.mono{font-family:var(--f-mono);font-size:12px;min-width:240px}
+.barcell{display:flex;align-items:center;gap:8px;min-width:150px}
+.minibar{height:8px;border-radius:2px;background:var(--line-strong)}
+.minibar.inc{background:var(--accent)}
+
+/* 要点ボックス */
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:18px 0 22px}
+.kv > div{min-width:0;border-top:2px solid var(--line-strong);padding-top:10px}
+.kv > div.good{border-top-color:var(--ok)}
+.kv > div.caution{border-top-color:var(--warn)}
+.kv h4{margin:0 0 6px;font-size:14px}
+.kv ul{margin:0;font-size:14px}
+
+/* 調査トレース */
+.trace{list-style:none;padding:0;margin:18px 0 22px;max-width:none;display:grid;gap:0;counter-reset:st}
+.trace > li{counter-increment:st;display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;margin:0;padding:0 0 18px;position:relative}
+.trace > li::before{content:counter(st);width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-mono);font-size:12.5px;font-weight:500;background:var(--surface);border:1.5px solid var(--line-strong);color:var(--muted);position:relative;z-index:1}
+.trace > li::after{content:"";position:absolute;left:14px;top:28px;bottom:0;width:1.5px;background:var(--line)}
+.trace > li:last-child::after{display:none}
+.trace > li.ai::before{border-color:var(--accent);color:var(--accent)}
+.trace .who{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em;margin-bottom:4px}
+.trace li.ai .who{color:var(--accent)}
+.trace p{margin:0 0 8px}
+.trace pre{font-size:12px}
+
+/* フェーズ */
+.phases{display:grid;gap:0;margin:18px 0 22px;border:1px solid var(--line);border-radius:6px;background:var(--surface);overflow:hidden}
+.phase{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.phase:last-child{border-bottom:none}
+.phase .when{font-family:var(--f-mono);font-size:12.5px;color:var(--accent);font-weight:500}
+.phase .when b{display:block;font-family:var(--f-display);font-size:15px;color:var(--fg)}
+.phase p,.phase ul{margin:0;font-size:14px}
+@media (max-width:560px){.phase{grid-template-columns:1fr;gap:4px}}
+
+/* 用語集 */
+dl.glossary{margin:12px 0 0;display:grid;gap:0;border-top:1px solid var(--line)}
+dl.glossary > div{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
+dl.glossary dt{font-weight:700;font-family:var(--f-display);font-size:15px}
+dl.glossary dt small{display:block;font-family:var(--f-mono);font-weight:400;font-size:11.5px;color:var(--muted)}
+dl.glossary dd{margin:0;font-size:14.5px;min-width:0}
+dl.glossary dd p{margin:0 0 6px}
+@media (max-width:620px){dl.glossary > div{grid-template-columns:1fr;gap:4px}}
+
+.callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:12px 16px;border-radius:0 6px 6px 0;margin:18px 0 22px;font-size:14.5px;max-width:46em}
+.callout p:last-child{margin-bottom:0}
+.refs{font-size:13.5px}
+.refs li{margin:5px 0}
+hr.sep{border:none;border-top:1px solid var(--line);margin:56px 0 0}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+
+<div class="shell">
+<nav class="toc" aria-label="目次">
+  <p>目次</p>
+  <ol>
+    <li><a href="#overview">全体像</a></li>
+    <li><a href="#scenario">説明に使う障害例</a></li>
+    <li><a href="#plan1">案1 ダイジェスト生成</a></li>
+    <li><a href="#plan2">案2 ログ検索ツール</a></li>
+    <li><a href="#plan3">案3 正常時との差分・辞書</a></li>
+    <li><a href="#plan4">案4 ログ自体の改善</a></li>
+    <li><a href="#roadmap">進め方と評価</a></li>
+    <li><a href="#cautions">注意点</a></li>
+    <li><a href="#glossary">付録A 用語集</a></li>
+    <li><a href="#refs">付録B 参考文献</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <p class="eyebrow">PMS 保守 / 生成AI活用 / 障害調査</p>
+  <h1>障害ログAI調査ガイド</h1>
+  <p class="lead">ログを丸ごとAIに読ませるのではなく、機械的な処理で「証拠」を絞り込んでから渡し、足りない部分はAI自身に取りに行かせる。この考え方を4つの案に分け、架空の障害例を使って具体的に説明します。</p>
+  <div class="meta"><span>作成日 2026-10-04</span><span>対象：障害一次調査の自動化（チケット書き戻し）の拡張</span></div>
+</header>
+
+<!-- ===================== 全体像 ===================== -->
+<h2 id="overview">全体像</h2>
+<p class="h2-sub">4つの案は独立した選択肢ではなく、1つのパイプラインの部品です。</p>
+
+<figure>
+  <div class="dg-wrap">
+  <svg class="dg" viewBox="0 0 880 420" role="img" aria-label="ログ一式からダイジェストを生成してAIに渡し、AIは検索ツール経由でログDBに必要な分だけ問い合わせ、結果を障害チケットに書き戻す構成図。正常ログ差分・既知ノイズ辞書・過去障害がダイジェスト生成とAIを支え、ログ自体の改善が入力の質を上げる。">
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+      <marker id="ah-acc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-acc" d="M0,0 L10,5 L0,10 z"/></marker>
+    </defs>
+
+    <!-- 案4 -->
+    <rect class="dash" x="20" y="30" width="150" height="76" rx="6"/>
+    <text class="t-tag" x="34" y="52">案4</text>
+    <text class="t-strong" x="34" y="72">ログ自体の改善</text>
+    <text class="t-sub" x="34" y="92">相関ID・構造化ログ</text>
+    <line class="edge" x1="95" y1="106" x2="95" y2="156" marker-end="url(#ah)"/>
+    <text class="t-edge" x="102" y="136">質を上げる</text>
+
+    <!-- 案3 -->
+    <rect class="acc" x="230" y="22" width="190" height="92" rx="6"/>
+    <text class="t-tag" x="244" y="44">案3</text>
+    <text class="t-strong" x="244" y="64">正常時との差分</text>
+    <text class="t-sub" x="244" y="84">既知ノイズ辞書</text>
+    <text class="t-sub" x="244" y="102">過去障害のシグネチャ</text>
+    <line class="edge-acc" x1="315" y1="114" x2="315" y2="156" marker-end="url(#ah-acc)"/>
+    <text class="t-edge" x="322" y="140">除外・差分</text>
+    <line class="edge-acc" x1="420" y1="96" x2="510" y2="156" marker-end="url(#ah-acc)"/>
+    <text class="t-edge" x="472" y="108">類似障害</text>
+
+    <!-- 既存 -->
+    <rect class="dash" x="690" y="22" width="170" height="92" rx="6"/>
+    <text class="t-tag" x="704" y="44">既存</text>
+    <text class="t-strong" x="704" y="64">コード・仕様</text>
+    <text class="t-strong" x="704" y="84">マニュアル・設計</text>
+    <text class="t-sub" x="704" y="102">機能別ディレクトリ地図</text>
+    <line class="edge" x1="700" y1="114" x2="610" y2="156" marker-end="url(#ah)"/>
+    <text class="t-edge" x="664" y="146">参照</text>
+
+    <!-- ログ一式 -->
+    <rect class="box" x="20" y="160" width="150" height="90" rx="6"/>
+    <text class="t-strong" x="34" y="186">ログ一式</text>
+    <text class="t-sub" x="34" y="208">server / agent</text>
+    <text class="t-sub" x="34" y="226">db / auth …</text>
+
+    <!-- 案1 -->
+    <rect class="acc" x="230" y="160" width="190" height="90" rx="6"/>
+    <text class="t-tag" x="244" y="182">案1</text>
+    <text class="t-strong" x="244" y="204">ダイジェスト生成</text>
+    <text class="t-sub" x="244" y="226">抽出・集計・マスク</text>
+
+    <!-- AI -->
+    <rect class="box" x="480" y="160" width="160" height="90" rx="6"/>
+    <text class="t-strong" x="494" y="194">AI一次調査</text>
+    <text class="t-sub" x="494" y="216">エージェント</text>
+
+    <!-- チケット -->
+    <rect class="box" x="710" y="160" width="150" height="90" rx="6"/>
+    <text class="t-strong" x="724" y="194">障害チケット</text>
+    <text class="t-sub" x="724" y="216">原因候補と根拠</text>
+
+    <line class="edge" x1="170" y1="205" x2="226" y2="205" marker-end="url(#ah)"/>
+    <line class="edge-acc" x1="420" y1="205" x2="476" y2="205" marker-end="url(#ah-acc)"/>
+    <text class="t-edge" x="424" y="196">数千</text>
+    <text class="t-edge" x="424" y="226">トークン</text>
+    <line class="edge" x1="640" y1="205" x2="706" y2="205" marker-end="url(#ah)"/>
+    <text class="t-edge" x="650" y="196">書き戻し</text>
+
+    <!-- DB -->
+    <rect class="box" x="230" y="320" width="190" height="72" rx="6"/>
+    <text class="t-strong" x="244" y="348">ログDB（DuckDB）</text>
+    <text class="t-sub" x="244" y="370">全量を保持・SQLで検索</text>
+    <polyline class="edge" points="95,250 95,356 226,356" marker-end="url(#ah)"/>
+    <text class="t-edge" x="104" y="345">全量を取り込み</text>
+
+    <!-- 案2 -->
+    <rect class="acc" x="480" y="320" width="160" height="72" rx="6"/>
+    <text class="t-tag" x="494" y="342">案2</text>
+    <text class="t-strong" x="494" y="362">ログ検索ツール</text>
+    <text class="t-sub" x="494" y="381">skills / MCP</text>
+    <line class="edge-acc" x1="535" y1="250" x2="535" y2="316" marker-end="url(#ah-acc)"/>
+    <text class="t-edge" x="462" y="290" text-anchor="end">必要な分だけ</text>
+    <text class="t-edge" x="462" y="306" text-anchor="end">問い合わせ</text>
+    <line class="edge-acc" x1="590" y1="320" x2="590" y2="254" marker-end="url(#ah-acc)"/>
+    <text class="t-edge" x="598" y="290">上限付きの</text>
+    <text class="t-edge" x="598" y="306">結果</text>
+    <line class="edge" x1="480" y1="356" x2="424" y2="356" marker-end="url(#ah)"/>
+    <text class="t-edge" x="436" y="348">SQL</text>
+  </svg>
+  </div>
+  <figcaption>AIが最初に受け取るのは案1のダイジェストだけです。ログ全量はDBに置いたままにし、AIは案2のツールを通じて必要な部分を少しずつ取りに行きます。案3はダイジェストの精度を上げ、案4は長期的にログそのものを調べやすくします。点線は既にあるもの、または長期の取り組みです。</figcaption>
+</figure>
+
+<div class="tbl">
+<table>
+  <thead><tr><th>案</th><th>役割</th><th>着手しやすさ</th><th>主な効果</th></tr></thead>
+  <tbody>
+    <tr><td><strong>案1</strong> ダイジェスト生成</td><td>AIへの最初の入力を数千トークンに圧縮する</td><td>すぐ着手できる（スクリプトのみ）</td><td>コンテキスト削減、ノイズ除去、再現性</td></tr>
+    <tr><td><strong>案2</strong> ログ検索ツール</td><td>ダイジェストで足りない部分をAIが自分で取りに行く</td><td>案1の後（ログのDB化が前提）</td><td>見落とし防止、時間窓の外も調べられる</td></tr>
+    <tr><td><strong>案3</strong> 差分・辞書・過去事例</td><td>「いつも出ているログ」を除き、「今回だけの変化」を目立たせる</td><td>案1と並行して少しずつ</td><td>精度向上、ベテランの暗黙知の形式知化</td></tr>
+    <tr><td><strong>案4</strong> ログ自体の改善</td><td>相関IDや構造化で、ログを機械が辿りやすくする</td><td>改修の機会に継続的に</td><td>長期的な調査効率、ツールの単純化</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ===================== 障害例 ===================== -->
+<h2 id="scenario">説明に使う障害例</h2>
+<p class="h2-sub">以降の具体例はすべてこの1件の架空の障害を使います。ログ形式、ID、顧客名も説明用に作ったものです。</p>
+
+<div class="example">
+  <div class="ex-head"><span>障害チケット INC-2026-0931</span><span class="chip ex">架空の例</span></div>
+  <div class="ex-body">
+    <div class="tbl" style="margin:0">
+    <table>
+      <tbody>
+        <tr><th>顧客・環境</th><td>A社 / PMS 5.2.3 / Windows Server 2019 / 印刷サーバ1台</td></tr>
+        <tr><th>症状</th><td>9月30日 10時40分頃から、一部ユーザーの印刷ジョブがプリンタで出力されない。管理画面ではジョブが「保留」のまま残る。</td></tr>
+        <tr><th>受領したログ</th><td><code>pms-server.log</code> <code>print-agent.log</code> <code>db.log</code> <code>auth.log</code>（3日分、合計 約40万行）</td></tr>
+        <tr><th>真の原因（後で判明）</th><td>一時ファイルの定期削除タスクが無効になっており、スプール領域が少しずつ埋まって容量が尽きた。</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<p>この障害を人が調べると、まず目につくのは大量に出ている <code>LDAP referral ignored</code> の警告や、障害後に急増するDB接続待ちの警告です。どちらも原因ではありません。前者は平常時から出ているノイズ、後者は結果として起きた二次症状です。ログ全量をAIに渡すと、AIも同じ罠にはまりやすくなります。</p>
+
+<!-- ===================== 案1 ===================== -->
+<h2 id="plan1"><span class="plan">案1</span>ログダイジェスト生成</h2>
+<p class="h2-sub">LLMを使わないスクリプトで、ログ一式を「AIが最初に読む要約資料」に変換します。</p>
+
+<h3>処理の流れ</h3>
+<p>処理は次の順に進めます。どれも決定論的な処理なので、同じログからは常に同じダイジェストができます。テストもしやすく、AIの判断が揺れたときに入力側を疑わずに済みます。</p>
+<ol>
+  <li><strong>収集と時刻の正規化</strong>：ファイルごとに異なる時刻形式・タイムゾーンをそろえ、1行を「時刻・レベル・コンポーネント・メッセージ」に分解する。</li>
+  <li><strong>時間窓の切り出し</strong>：チケットの発生時刻の前後（例：±30分）だけを残す。窓は後で案2のツールから広げられる。</li>
+  <li><strong>マージ</strong>：複数ファイルを時刻順に1本へまとめる。サーバとエージェントの因果関係が並んで見えるようになる。</li>
+  <li><strong>エラー抽出と前後の文脈</strong>：ERROR／例外／スタックトレースを塊ごと抜き出し、前後数行を付ける。重なる範囲は1つにまとめる。</li>
+  <li><strong>テンプレート化と集計</strong>：Drain3で同じ形のメッセージをまとめ、「テンプレート × 件数 × 初出時刻」の表にする。</li>
+  <li><strong>マスキング</strong>：ユーザー名、文書名、PC名、IPアドレスなど、顧客情報になり得る値を置き換える。</li>
+</ol>
+
+<figure>
+  <div class="dg-wrap">
+  <svg class="dg" viewBox="0 0 760 252" role="img" aria-label="架空例でのログ量の絞り込み。40万行のログ一式が、時間窓で12,480行、エラー周辺の抽出で620行、テンプレート化で48種類、最終的に約5千トークンのダイジェストになる。">
+    <rect class="bar" x="20" y="20" width="420" height="30" rx="3"/>
+    <text x="32" y="40" class="t-strong">400,000 行</text>
+    <text x="452" y="40">ログ一式（3日分・4ファイル）</text>
+
+    <rect class="bar" x="20" y="66" width="330" height="30" rx="3"/>
+    <text x="32" y="86" class="t-strong">12,480 行</text>
+    <text x="362" y="86">時間窓（発生時刻 ±30分）</text>
+
+    <rect class="bar" x="20" y="112" width="230" height="30" rx="3"/>
+    <text x="32" y="132" class="t-strong">620 行</text>
+    <text x="262" y="132">ERROR・例外＋前後5行</text>
+
+    <rect class="bar" x="20" y="158" width="150" height="30" rx="3"/>
+    <text x="32" y="178" class="t-strong">48 種類</text>
+    <text x="182" y="178">テンプレート化して件数で集計</text>
+
+    <rect class="bar-end" x="20" y="204" width="90" height="30" rx="3"/>
+    <text x="122" y="224" class="t-strong">約5,000 トークンのダイジェスト</text>
+    <text x="370" y="224" class="t-sub">（全量なら約1,600万トークン：1行40トークン換算）</text>
+  </svg>
+  </div>
+  <figcaption>架空例での絞り込みの目安です。棒の長さは対数で縮めたイメージで、実際の比率はもっと極端です。</figcaption>
+</figure>
+
+<h3>具体例：生ログからテンプレート表へ</h3>
+<div class="example">
+  <div class="ex-head"><span>入力：pms-server.log の一部（時間窓内）</span><span class="chip ex">架空の例</span></div>
+  <div class="ex-body">
+<pre><span class="dim">2026-09-30 10:41:58.112 INFO  [job-worker-3] Job J-20388 completed (pages=4)</span>
+<span class="dim">2026-09-30 10:42:03.551 WARN  [ldap] LDAP referral ignored: ldap://dc2.corp-a.local</span>
+<span class="hl">2026-09-30 10:42:05.907 ERROR [spool] Spool write failed: disk quota exceeded on D:\PMS\spool\J-20391.tmp</span>
+<span class="hl">2026-09-30 10:42:05.910 ERROR [job-worker-1] Job J-20391 aborted: IOException at SpoolWriter.write(SpoolWriter.java:212)</span>
+2026-09-30 10:42:06.004 WARN  [db] Connection pool wait 1250 ms (active=50/50)
+2026-09-30 10:42:06.330 ERROR [spool] Spool write failed: disk quota exceeded on D:\PMS\spool\J-20392.tmp
+<span class="dim">2026-09-30 10:42:07.018 WARN  [ldap] LDAP referral ignored: ldap://dc3.corp-a.local</span>
+<span class="dim">… 以下 12,000 行以上</span></pre>
+    <p class="ex-note">印が付いた2行が最初の異常です。人が読むときもAIが読むときも、この2行に早くたどり着けるかどうかが調査時間を左右します。</p>
+  </div>
+</div>
+
+<div class="example">
+  <div class="ex-head"><span>Drain3 によるテンプレート集計（ERROR / WARN の上位）</span><span class="chip ex">架空の例</span></div>
+  <div class="ex-body" style="padding:0">
+    <div class="tbl" style="margin:0;border:none;border-radius:0">
+    <table>
+      <thead><tr><th>ID</th><th>レベル</th><th>件数</th><th>初出</th><th>テンプレート</th></tr></thead>
+      <tbody>
+        <tr><td class="mono" style="min-width:0">T21</td><td>WARN</td><td class="num">2,050</td><td class="num">10:10:00</td><td class="mono">LDAP referral ignored: &lt;URL&gt;</td></tr>
+        <tr><td class="mono" style="min-width:0">T12</td><td>WARN</td><td class="num">960</td><td class="num">10:42:06</td><td class="mono">Connection pool wait &lt;NUM&gt; ms (active=&lt;NUM&gt;/&lt;NUM&gt;)</td></tr>
+        <tr><td class="mono" style="min-width:0">T07</td><td>ERROR</td><td class="num">214</td><td class="num">10:42:05</td><td class="mono">Spool write failed: disk quota exceeded on &lt;PATH&gt;</td></tr>
+        <tr><td class="mono" style="min-width:0">T08</td><td>ERROR</td><td class="num">211</td><td class="num">10:42:05</td><td class="mono">Job &lt;JOBID&gt; aborted: IOException at &lt;*&gt;</td></tr>
+        <tr><td class="mono" style="min-width:0">T15</td><td>WARN</td><td class="num">3</td><td class="num">10:20:44</td><td class="mono">Spool usage &lt;NUM&gt;% on &lt;DRIVE&gt;</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+<p>12,000行あまりのログが、意味の単位で数十行の表になります。件数だけ見ると T21 と T12 が目立ちますが、<strong>初出時刻</strong>を並べると T07・T08 が最初に起きていることが分かります。件数で並べるだけでなく初出時刻を必ず載せるのはこのためです。</p>
+
+<h3>具体例：AIに渡すダイジェスト</h3>
+<div class="example">
+  <div class="ex-head"><span>digest_INC-2026-0931.md（自動生成）</span><span class="chip ex">架空の例</span></div>
+  <div class="ex-body">
+<pre><span class="kw"># 障害ログダイジェスト</span>
+チケット: INC-2026-0931 / 製品: PMS 5.2.3 / OS: Windows Server 2019
+症状: 10:40頃から一部ユーザーの印刷ジョブが出力されない（保留のまま）
+時間窓: 2026-09-30 10:10〜11:10（申告時刻 ±30分）
+対象: pms-server.log, print-agent.log, db.log, auth.log（窓内 12,480行）
+
+<span class="kw">## 最初に出た ERROR（時刻順・先頭3件）</span>
+10:42:05.907 [spool] Spool write failed: disk quota exceeded on &lt;PATH&gt;
+10:42:05.910 [job-worker-1] Job &lt;JOBID&gt; aborted: IOException at SpoolWriter.write(SpoolWriter.java:212)
+10:42:06.330 [spool] Spool write failed: disk quota exceeded on &lt;PATH&gt;
+
+<span class="kw">## テンプレート集計（ERROR/WARN、初出順）</span>
+T15  WARN     3件  初出10:20:44  Spool usage &lt;NUM&gt;% on &lt;DRIVE&gt;
+T07  ERROR  214件  初出10:42:05  Spool write failed: disk quota exceeded on &lt;PATH&gt;
+T08  ERROR  211件  初出10:42:05  Job &lt;JOBID&gt; aborted: IOException at &lt;*&gt;
+T12  WARN   960件  初出10:42:06  Connection pool wait &lt;NUM&gt; ms (active=&lt;NUM&gt;/&lt;NUM&gt;)
+
+<span class="kw">## 既知ノイズとして除外（案3の辞書による）</span>
+T21  LDAP referral ignored（2,050件）: AD多段構成で平常時から出力
+
+<span class="kw">## 代表スタックトレース（T08、1件のみ）</span>
+java.io.IOException: There is not enough space on the disk
+  at SpoolWriter.write(SpoolWriter.java:212)
+  at JobProcessor.spool(JobProcessor.java:88)
+  …（以下省略、全文は get_context で取得可）</pre>
+    <p class="ex-note">最後の行のように、省略した箇所には「どのツールで続きが取れるか」を書いておきます。AIが省略に気づかず推測で埋めるのを防げます。</p>
+  </div>
+</div>
+
+<h3>実装のヒント</h3>
+<p>言語はPythonが扱いやすく、Drain3もDuckDBもPythonのライブラリとしてそのまま使えます。Drain3に渡すのは時刻やレベルを除いた<strong>メッセージ部分だけ</strong>にするのがコツです。先頭に時刻が付いたままだと、すべての行が別物に見えてしまいます。</p>
+<div class="example">
+  <div class="ex-head"><span>Drain3 の最小構成</span><span class="chip same">Python</span></div>
+  <div class="ex-body">
+<pre><span class="kw">from</span> drain3 <span class="kw">import</span> TemplateMiner
+<span class="kw">from</span> drain3.template_miner_config <span class="kw">import</span> TemplateMinerConfig
+
+config = TemplateMinerConfig()
+config.load(<span class="dim">"drain3.ini"</span>)          <span class="cm"># マスキング規則（IP・パス・ジョブIDなど）を記述</span>
+miner = TemplateMiner(config=config)
+
+<span class="kw">for</span> rec <span class="kw">in</span> records:                  <span class="cm"># rec は時刻・レベル・メッセージに分解済み</span>
+    r = miner.add_log_message(rec.message)
+    rec.template_id = r[<span class="dim">"cluster_id"</span>]
+<span class="cm"># 集計：template_id ごとに件数・初出・最終時刻・レベルを数える</span></pre>
+  </div>
+</div>
+
+<div class="kv">
+  <div class="good"><h4>良い点</h4><ul><li>LLMを使わないので速く、費用もかからない</li><li>同じ入力から同じ出力になり、テストできる</li><li>既存の一次調査パイプラインの前段に足すだけで済む</li></ul></div>
+  <div class="caution"><h4>限界</h4><ul><li>抽出の段階で重要な1行を落とすことがある</li><li>ERRORにならない異常（処理が黙って止まる等）は拾いにくい</li><li>この2点は案2と案3で補う</li></ul></div>
+</div>
+
+<!-- ===================== 案2 ===================== -->
+<h2 id="plan2"><span class="plan">案2</span>ログ検索ツール</h2>
+<p class="h2-sub">ログ全量をDBに入れておき、AIが仮説に応じて必要な部分だけを問い合わせられるようにします。</p>
+
+<p>ダイジェストは入口にすぎません。調査が進むと「この警告は障害の前から出ていたか」「同じジョブIDの他のログは何か」といった疑問が出てきます。人ならgrepやエディタで確かめるところを、AIにはツールとして渡します。コード・仕様・マニュアルを必要な時に必要な分だけ読む既存の一次調査と、同じ設計思想です。</p>
+
+<h3>ツールの例</h3>
+<p>汎用のSQLだけでなく、よく使う調べ方を専用ツールにしておくとAIが迷いにくくなります。どのツールも<strong>返す量に上限</strong>を設けるのが最も大事な点です。</p>
+<div class="tbl">
+<table>
+  <thead><tr><th>ツール</th><th>用途</th><th>主な引数</th><th>返却の上限</th></tr></thead>
+  <tbody>
+    <tr><td class="mono" style="min-width:0">get_digest</td><td>調査の入口。案1のダイジェストを返す</td><td>ticket_id</td><td>約5,000トークン</td></tr>
+    <tr><td class="mono" style="min-width:0">search_logs</td><td>キーワード・レベル・時間範囲・ファイルで検索</td><td>query, level, from, to, file</td><td>200行。超えたら件数と先頭20行のみ</td></tr>
+    <tr><td class="mono" style="min-width:0">get_context</td><td>特定の行の前後を見る</td><td>line_id, before, after</td><td>前後それぞれ50行</td></tr>
+    <tr><td class="mono" style="min-width:0">template_lines</td><td>テンプレートIDの実際の行を見る</td><td>template_id, limit</td><td>20行</td></tr>
+    <tr><td class="mono" style="min-width:0">count_by_time</td><td>テンプレートごとの件数の時間推移</td><td>template_ids, bucket, from, to</td><td>120区間</td></tr>
+    <tr><td class="mono" style="min-width:0">run_sql</td><td>上記で足りない時の読み取り専用SQL</td><td>sql</td><td>200行・30秒</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>具体例：AIの調査の進み方</h3>
+<p>架空の障害で、AIがツールを使って原因にたどり着くまでの流れです。ダイジェストの時間窓（10:10〜11:10）の外にある証拠を、AIが自分で取りに行っている点に注目してください。</p>
+
+<ol class="trace">
+  <li class="ai"><div>
+    <div class="who">AI ダイジェストを読んで仮説を立てる</div>
+    <p>最初の異常は10:42:05のスプール書き込み失敗（T07）。DB接続待ち（T12）はその後から増えているので結果側の可能性が高い。容量不足がいつから進んでいたかを確かめる。</p>
+  </div></li>
+  <li><div>
+    <div class="who">ツール呼び出し</div>
+<pre>search_logs(query="Spool usage", level="WARN", from="2026-09-27", to="2026-09-30 10:42")
+<span class="dim">→ 6件</span>
+09-28 03:00:12 WARN [spool] Spool usage 81% on D:
+09-29 03:00:09 WARN [spool] Spool usage 88% on D:
+09-30 03:00:10 WARN [spool] Spool usage 95% on D:
+09-30 10:20:44 WARN [spool] Spool usage 99% on D:   <span class="cm">… 他2件</span></pre>
+  </div></li>
+  <li class="ai"><div>
+    <div class="who">AI 仮説を更新する</div>
+    <p>使用率が数日かけて単調に増えている。急な大量印刷ではなく、何かが消されずに溜まっている。毎日3時に動く処理を確認する。</p>
+  </div></li>
+  <li><div>
+    <div class="who">ツール呼び出し</div>
+<pre>run_sql("SELECT ts, component, message FROM logs
+         WHERE component = 'cleanup' ORDER BY ts DESC LIMIT 5")
+<span class="dim">→ 5行</span>
+09-30 03:00:01 cleanup  Temp cleanup skipped: scheduled task disabled
+09-29 03:00:01 cleanup  Temp cleanup skipped: scheduled task disabled
+<span class="cm">… 09-24 以降すべて同じ</span></pre>
+  </div></li>
+  <li class="ai"><div>
+    <div class="who">AI 結論をチケットに書き戻す</div>
+    <p><strong>原因候補</strong>：一時ファイル削除タスクが9月24日以降無効になっており、スプール領域（D:）が枯渇した。<br>
+    <strong>根拠</strong>：cleanup の skipped ログ（9/24〜）、使用率の単調増加（81%→99%）、10:42:05 の disk quota exceeded。<br>
+    <strong>二次症状</strong>：ジョブ中断の再試行によるDB接続待ちの増加（T12）。<br>
+    <strong>次の確認</strong>：タスクが無効化された経緯（9/24前後の設定変更）、<code>SpoolWriter.java:212</code> の容量不足時の扱い（コード参照）。</p>
+  </div></li>
+</ol>
+
+<div class="callout"><p>AIへの入力は、ダイジェスト約5,000トークンとツール結果4回分を合わせても1万トークン程度です。それでいて、ダイジェストだけでは見えなかった「9月24日から」という核心の証拠に届いています。</p></div>
+
+<h3>DuckDB にログを入れる</h3>
+<p>案1でパースしたレコードを、そのままDuckDBのテーブルにします。サーバを立てる必要がなく、障害1件ごとに1ファイルのDBを作って捨てられるので、顧客ごとにログを分けて扱う運用にも合います。</p>
+<div class="example">
+  <div class="ex-head"><span>取り込みと問い合わせの例</span><span class="chip same">SQL（DuckDB）</span></div>
+  <div class="ex-body">
+<pre><span class="cm">-- 案1で出力した Parquet をそのままテーブルにする</span>
+<span class="kw">CREATE TABLE</span> logs <span class="kw">AS SELECT</span> * <span class="kw">FROM</span> read_parquet('INC-2026-0931/parsed/*.parquet');
+
+<span class="cm">-- 1分ごとの件数推移（count_by_time ツールの中身）</span>
+<span class="kw">SELECT</span> date_trunc('minute', ts) <span class="kw">AS</span> m, template_id, count(*) <span class="kw">AS</span> n
+<span class="kw">FROM</span> logs
+<span class="kw">WHERE</span> template_id <span class="kw">IN</span> ('T07', 'T12') <span class="kw">AND</span> ts <span class="kw">BETWEEN</span> '2026-09-30 10:30' <span class="kw">AND</span> '2026-09-30 11:00'
+<span class="kw">GROUP BY</span> 1, 2 <span class="kw">ORDER BY</span> 1;</pre>
+  </div>
+</div>
+
+<h3>既存パイプラインへの組み込み方</h3>
+<ul>
+  <li><strong>まずは skills ＋ コマンドラインのスクリプト</strong>：既存の一次調査が skills でディレクトリ地図を渡しているのと同じ形で、「ログを調べる時はこのコマンドを使う」という skill を足すのが一番小さな変更です。</li>
+  <li><strong>複数の利用者・ツールから使うなら MCP サーバ</strong>：VS Code で個人が使う場合と、自動の一次調査の両方から同じツールを呼びたくなったら、MCPサーバとしてまとめると共通化できます。</li>
+  <li><strong>読み取り専用を徹底</strong>：run_sql は読み取り専用の接続で開き、タイムアウトと行数上限を必ず付けます。</li>
+</ul>
+
+<!-- ===================== 案3 ===================== -->
+<h2 id="plan3"><span class="plan">案3</span>正常時との差分・既知ノイズ辞書・過去障害</h2>
+<p class="h2-sub">「いつも出ているもの」を外し、「今回だけ変わったもの」を目立たせます。</p>
+
+<h3>正常時との差分</h3>
+<p>同じバージョンの正常なログ（社内の検証環境、または同じ顧客の障害前の時間帯）を比較対象にして、テンプレートごとの件数を並べます。障害時だけ<em>出た</em>ログだけでなく、障害時に<em>消えた</em>ログも重要な手がかりです。処理が黙って止まった場合はERRORが出ず、「いつもの完了ログが無い」ことでしか気づけません。</p>
+
+<div class="example">
+  <div class="ex-head"><span>同じ1時間の比較：正常日（9/23）と障害日（9/30）</span><span class="chip ex">架空の例</span></div>
+  <div class="ex-body" style="padding:0">
+  <div class="tbl" style="margin:0;border:none;border-radius:0">
+  <table>
+    <thead><tr><th>テンプレート</th><th>正常日</th><th>障害日</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">Spool write failed: disk quota exceeded on &lt;PATH&gt;</td><td class="num">0</td><td><div class="barcell"><span class="minibar inc" style="width:22px"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">214</span></div></td><td><span class="chip new">障害時のみ</span></td></tr>
+      <tr><td class="mono">Connection pool wait &lt;NUM&gt; ms (active=&lt;NUM&gt;/&lt;NUM&gt;)</td><td class="num">35</td><td><div class="barcell"><span class="minibar inc" style="width:96px"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">960</span></div></td><td><span class="chip up">急増（27倍）</span></td></tr>
+      <tr><td class="mono">Job &lt;JOBID&gt; completed (pages=&lt;NUM&gt;)</td><td class="num">3,400</td><td><div class="barcell"><span class="minibar" style="width:41px"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">410</span></div></td><td><span class="chip down">激減（88%減）</span></td></tr>
+      <tr><td class="mono">Temp cleanup finished: &lt;NUM&gt; files removed</td><td class="num">1</td><td><div class="barcell"><span class="minibar" style="width:0"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">0</span></div></td><td><span class="chip down">消失</span></td></tr>
+      <tr><td class="mono">LDAP referral ignored: &lt;URL&gt;</td><td class="num">2,100</td><td><div class="barcell"><span class="minibar" style="width:150px;max-width:150px"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">2,050</span></div></td><td><span class="chip noise">既知ノイズ</span></td></tr>
+      <tr><td class="mono">License check OK</td><td class="num">12</td><td><div class="barcell"><span class="minibar" style="width:2px"></span><span class="num" style="font-family:var(--f-mono);font-size:12.5px">12</span></div></td><td><span class="chip same">変化なし</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  </div>
+</div>
+<p>この比較をダイジェストに載せると、AIは「LDAPの警告は平常どおり」「cleanupの完了ログが消えている」という事実を最初から持った状態で調査を始められます。上の表では「消失」の行が、案2の例で最後にたどり着いた原因を最初から指しています。</p>
+
+<div class="callout"><p>件数の少なさだけで異常と決めるのは危険です。大規模な障害ログの研究でも、障害を示すログの相当部分は低頻度ではなかったと報告されています。件数の増減に加えて「初出時刻」「平常時に存在するか」を組み合わせて判断します。</p></div>
+
+<h3>既知ノイズ辞書</h3>
+<p>平常時から出ているWARN／ERRORを、理由付きでバージョンごとに登録します。ダイジェスト生成時に除外し、「除外した」ことだけを1行で残します。長年の保守で担当者が頭の中に持っている「このエラーは無視してよい」という判断を、文書にする作業でもあります。</p>
+<div class="example">
+  <div class="ex-head"><span>known_noise.yaml</span><span class="chip ex">架空の例</span></div>
+  <div class="ex-body">
+<pre>- template: "LDAP referral ignored: &lt;*&gt;"
+  versions: ["5.1.*", "5.2.*"]
+  reason: "AD多段構成の環境では常時出力される。動作への影響なし"
+  added: 2026-05 保守チーム
+
+- template: "Font cache rebuild skipped"
+  versions: ["*"]
+  reason: "起動時に毎回出る。性能・機能への影響なし"
+  added: 2026-06 保守チーム</pre>
+    <p class="ex-note">登録には理由を必須にします。理由のない除外は、本当の原因を隠す原因になります。</p>
+  </div>
+</div>
+
+<h3>過去障害のシグネチャ</h3>
+<p>解決済みの障害チケットに、そのとき特徴的だったテンプレートの組み合わせ（シグネチャ）を紐付けて貯めます。新しい障害のダイジェストと照合し、似た過去事例があればAIに渡します。</p>
+<div class="example">
+  <div class="ex-head"><span>照合結果の例</span><span class="chip ex">架空の例</span></div>
+  <div class="ex-body">
+<pre><span class="kw">類似の過去障害: INC-2025-0412</span>（B社 / PMS 5.1.8）  一致度: テンプレート 3/4 一致
+  シグネチャ: Spool write failed / Job aborted: IOException / Spool usage &lt;NUM&gt;%
+  原因: OSアップデート後に一時ファイル削除タスクが無効化されていた
+  対処: タスクを再有効化。恒久対策として容量監視の閾値を追加（5.1.9）</pre>
+    <p class="ex-note">過去事例はあくまで「候補」としてAIに渡し、今回のログで裏付けが取れるかを確かめさせます。</p>
+  </div>
+</div>
+
+<!-- ===================== 案4 ===================== -->
+<h2 id="plan4"><span class="plan">案4</span>ログ自体の改善</h2>
+<p class="h2-sub">新機能や修正の機会に、ログを機械が辿りやすい形へ少しずつ変えていきます。</p>
+
+<div class="example">
+  <div class="ex-head"><span>同じ事象の記録：改善前と改善後</span><span class="chip ex">架空の例</span></div>
+  <div class="ex-body">
+<pre><span class="cm"># 改善前：どのジョブか、なぜ失敗したかが分からない</span>
+2026-09-30 10:42:05 ERROR Write failed
+
+<span class="cm"># 改善後：1行1JSON（JSON Lines）。イベント名・相関ID・理由コードを持つ</span>
+{"ts":"2026-09-30T10:42:05.907+09:00","level":"ERROR","comp":"spool",
+ "event":"SPOOL_WRITE_FAILED","job_id":"J-20391","corr_id":"c-7f3a",
+ "ver":"5.2.3","reason":"DISK_QUOTA","free_mb":0}</pre>
+  </div>
+</div>
+<ul>
+  <li><strong>相関ID</strong>：1つの印刷ジョブがサーバ、エージェント、DBをまたいで動くとき、同じIDを全ログに出す。案2のツールで1回の検索で全経路を追える。</li>
+  <li><strong>イベント名と理由コード</strong>：文章ではなく固定の名前を出す。Drain3に頼らなくても集計できる。</li>
+  <li><strong>状態のスナップショット</strong>：容量や接続数など、障害時に知りたい値を定期的に出す。上の例の「Spool usage」はその一種。</li>
+  <li><strong>ログ収集の標準化</strong>：顧客から受け取るログ一式（ファイル、期間、設定情報）を収集ツールで固定する。ダイジェスト生成の前提がそろう。</li>
+</ul>
+<p>約1,000万行のコードすべてを直す必要はありません。障害が多い機能、案3の差分で「手がかりが足りなかった」機能から順に手を入れるのが現実的です。</p>
+
+<!-- ===================== 進め方 ===================== -->
+<h2 id="roadmap">進め方と評価</h2>
+<p class="h2-sub">効果を測りながら、案1から順に積み上げます。</p>
+
+<div class="phases">
+  <div class="phase"><div class="when">準備<b>評価セット</b></div><div><p>解決済みの市場障害10〜20件について、受領したログ一式と「正解の原因」をセットにする。種類（設定・環境・コード不具合・外部連携）が偏らないように選ぶ。</p></div></div>
+  <div class="phase"><div class="when">段階1<b>案1 ダイジェスト</b></div><div><p>ダイジェスト生成スクリプトを作り、既存の一次調査パイプラインの前段に入れる。評価セットで「ダイジェストに正解の手がかりが含まれていたか」をまず測る。</p></div></div>
+  <div class="phase"><div class="when">段階2<b>案2 検索ツール</b></div><div><p>DuckDBへの取り込みと検索ツールを skill として追加する。AIが何回ツールを呼んだか、どの証拠で結論を出したかを記録して見直す。</p></div></div>
+  <div class="phase"><div class="when">段階3<b>案3 差分・辞書</b></div><div><p>既知ノイズ辞書を主要バージョンから作り始め、正常ログとの差分をダイジェストに加える。解決済みチケットへのシグネチャ付与を運用に組み込む。</p></div></div>
+  <div class="phase"><div class="when">継続<b>案4 ログ改善</b></div><div><p>段階1〜3の振り返りで「ログに手がかりが無かった」箇所を記録し、改修の機会にログを追加・構造化する。</p></div></div>
+</div>
+
+<h3>測る指標</h3>
+<div class="tbl">
+<table>
+  <thead><tr><th>指標</th><th>意味</th></tr></thead>
+  <tbody>
+    <tr><td>正解原因への到達率</td><td>評価セットのうち、AIの一次調査が正解の原因（または正しい方向）を示した割合</td></tr>
+    <tr><td>根拠の正しさ</td><td>AIが挙げたログ行が実在し、結論を支えているか。ハルシネーションの検出にもなる</td></tr>
+    <tr><td>一次調査の所要時間</td><td>チケット登録から一次調査結果の書き戻しまで</td></tr>
+    <tr><td>AIへの入力トークン量</td><td>費用と速度の目安。全量投入と比べてどれだけ減ったか</td></tr>
+    <tr><td>担当者が追加で読んだログ量</td><td>AIの結果を受けて人が確認に使った時間。最終的に減らしたいのはここ</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ===================== 注意点 ===================== -->
+<h2 id="cautions">注意点</h2>
+<div class="kv">
+  <div class="caution"><h4>顧客情報のマスキング</h4><ul><li>コードの外部送信は許可済みでも、顧客ログは別扱い</li><li>ユーザー名、文書名、PC名、IP、メールアドレスを置換</li><li>置換は一貫させる（同じ人は常に同じ記号）と追跡できる</li></ul></div>
+  <div class="caution"><h4>複数バージョン・国別差異</h4><ul><li>ログ形式がバージョンで異なる場合はパーサ設定を分ける</li><li>既知ノイズ辞書もバージョン別に持つ</li><li>案件個別版は差分比較の基準ログを別に用意する</li></ul></div>
+  <div class="caution"><h4>時刻のずれ</h4><ul><li>サーバ・クライアント間の時計のずれ、タイムゾーンの違い</li><li>マージ前に正規化し、ずれがあればダイジェストに明記</li></ul></div>
+  <div class="caution"><h4>根拠の確認</h4><ul><li>AIの結論には根拠のログ行（時刻・ファイル）を必ず付けさせる</li><li>引用された行が実在するかを機械的に照合する</li></ul></div>
+</div>
+
+<hr class="sep">
+
+<!-- ===================== 用語集 ===================== -->
+<h2 id="glossary">付録A 用語集</h2>
+<p class="h2-sub">本文に出てくる用語の概要です。</p>
+<dl class="glossary">
+  <div><dt>ログテンプレート<small>log template / log parsing</small></dt><dd><p>ログメッセージを「固定の文言」と「毎回変わる値」に分けたときの固定部分の形です。たとえば <code>Job J-20391 aborted</code> と <code>Job J-20392 aborted</code> は、どちらも <code>Job &lt;*&gt; aborted</code> という同じテンプレートになります。生ログからテンプレートを取り出す処理をログパースと呼びます。</p></dd></div>
+  <div><dt>Drain<small>ログパースのアルゴリズム</small></dt><dd><p>2017年に発表された、ログを高速にテンプレート化するアルゴリズムです。メッセージの単語数と先頭の単語で木構造をたどって候補を絞り、似ていれば同じグループ、似ていなければ新しいグループにします。学習データが不要で、1行ずつ流しながら処理できるのが特徴です。研究でも実務でも、ログ前処理の定番として広く使われています。</p></dd></div>
+  <div><dt>Drain3<small>Python ライブラリ</small></dt><dd><p>Drainを実用向けに拡張したPythonのオープンソース実装です。<code>pip install drain3</code> で導入できます。主な機能は、正規表現によるマスキング（IPや数値を <code>&lt;IP&gt;</code> <code>&lt;NUM&gt;</code> に置換）、学習した状態のファイル等への保存、類似度のしきい値などの設定です。本ガイドの案1で、テンプレート集計に使います。</p></dd></div>
+  <div><dt>マスキング<small>masking</small></dt><dd><p>本ガイドでは2つの意味で使っています。1つはテンプレート化のために変わる値を記号に置き換えること、もう1つは顧客情報を外部に出さないために値を置き換えることです。同じ仕組みで両方を実現できます。</p></dd></div>
+  <div><dt>DuckDB<small>組み込み型の分析用DB</small></dt><dd><p>サーバを立てずにアプリケーションの中で動く、分析向けのSQLデータベースです。SQLiteの分析版と考えると分かりやすいです。Pythonから <code>import duckdb</code> だけで使え、CSV・JSON・Parquetファイルを直接SQLで読めます。大量の行の集計が速く、障害1件ごとに1ファイルのDBを作って捨てる使い方に向いています。ライセンスはMITです。</p></dd></div>
+  <div><dt>Parquet<small>列指向ファイル形式</small></dt><dd><p>表形式のデータを列ごとに圧縮して保存するファイル形式です。CSVより小さく、必要な列だけを速く読めます。案1でパースした結果をParquetで保存しておくと、DuckDBへの取り込みが簡単になります。</p></dd></div>
+  <div><dt>AIエージェント<small>agent</small></dt><dd><p>AIが一度で答えを出すのではなく、「考える → ツールを使う → 結果を見て次を考える」を繰り返して課題を解く使い方です。案2の調査の流れがその例です。</p></dd></div>
+  <div><dt>ツール呼び出し<small>tool use / function calling</small></dt><dd><p>AIが、あらかじめ定義された関数（検索、SQL実行など）を引数付きで呼び出す仕組みです。AIは結果のテキストだけを受け取るので、ツール側で返す量を制御できます。</p></dd></div>
+  <div><dt>Skills<small>Agent Skills</small></dt><dd><p>AIに特定の作業のやり方を教えるための、説明文（SKILL.md）とスクリプトをまとめたフォルダです。AIは作業に関係するときだけ中身を読み込みます。既存の一次調査でディレクトリ地図を渡しているのと同じ仕組みで、ログ検索の手順とコマンドを渡せます。</p></dd></div>
+  <div><dt>MCP<small>Model Context Protocol</small></dt><dd><p>AIアプリケーションと外部のツールやデータをつなぐためのオープンな仕様で、2024年にAnthropicが公開しました。ツールをMCPサーバとして作ると、対応する複数のAIクライアント（VS Codeの拡張、自動実行のエージェントなど）から同じ形で呼べます。</p></dd></div>
+  <div><dt>RAG<small>Retrieval-Augmented Generation</small></dt><dd><p>AIに質問する前に、関係する文書や事例を検索して一緒に渡す手法です。案3の過去障害シグネチャの照合はRAGの一種です。</p></dd></div>
+  <div><dt>トークン・コンテキストウィンドウ<small>token / context window</small></dt><dd><p>トークンはAIが文章を処理する単位で、英数字のログ1行はおよそ数十トークンになります。コンテキストウィンドウは、AIが一度に扱える入力の上限です。上限内に収まっても、入力が長いほど費用と時間が増え、重要な情報が埋もれて精度が下がりやすくなります。</p></dd></div>
+  <div><dt>時間窓<small>time window</small></dt><dd><p>分析の対象にする時間の範囲です。障害の発生時刻の前後に絞ることで、ログ量を大きく減らせます。原因が窓の外にある場合に備え、案2のツールで窓の外も調べられるようにしておきます。</p></dd></div>
+  <div><dt>ベースライン差分<small>baseline diff</small></dt><dd><p>正常時のログ（ベースライン）と障害時のログを比べ、増えたもの・減ったもの・新しく出たもの・消えたものを取り出す方法です。案3の中心となる考え方です。</p></dd></div>
+  <div><dt>相関ID<small>correlation ID</small></dt><dd><p>1つの処理（1つの印刷ジョブ、1つの要求など）に付ける共通のIDで、その処理に関わるすべてのログに出力します。複数のプロセスやサーバにまたがる処理を1回の検索で追えるようになります。</p></dd></div>
+  <div><dt>構造化ログ・JSON Lines<small>structured logging</small></dt><dd><p>ログを自由な文章ではなく、項目名の付いたデータとして出す方式です。1行に1つのJSONを書く形式をJSON Linesと呼びます。パースが不要になり、DuckDBでもそのまま読めます。</p></dd></div>
+  <div><dt>階層要約<small>map-reduce summarization</small></dt><dd><p>大きなログを分割してそれぞれAIに要約させ、要約同士をさらに要約する方法です。手軽ですが、途中の要約で重要な1行が落ちる危険があるため、本ガイドでは主な手段にしていません。</p></dd></div>
+</dl>
+
+<!-- ===================== 参考 ===================== -->
+<h2 id="refs">付録B 参考文献</h2>
+<p class="h2-sub">本ガイドの考え方の根拠にした研究・事例です。</p>
+<ul class="refs">
+  <li><a href="https://arxiv.org/html/2506.03691v2">LogSage: An LLM-Based Framework for CI/CD Failure Detection and Remediation</a>：キーワード一致、末尾優先、成功時ログとの差分で候補行を絞ってからLLMに渡す（案1・案3）</li>
+  <li><a href="https://arxiv.org/html/2511.14803v1">Scalable and Efficient Large-Scale Log Analysis with LLMs: An IT Software Support Case Study</a>：テンプレート化で代表行に絞ってからLLMで分析するIBMの事例（案1）</li>
+  <li><a href="https://www.alphaxiv.org/audio/2602.08804v1">RC-LLM: Root Cause Analysis Method Based on LLMs with Residual Connection Structures</a>：生ログを直接渡さず、障害シグナルを先に抽出する設計（案1）</li>
+  <li><a href="https://arxiv.org/html/2509.15635v1">MicroRCA-Agent</a>：Drainによるテンプレート抽出とルールで大量のログを障害特徴に圧縮（案1）</li>
+  <li><a href="https://torq.io/blog/multi-agent-security-investigation/">Stop Feeding Logs to LLMs (Torq)</a>：専用ツールで絞り込ませる方が、ログをそのまま渡すより有効だった事例（案2）</li>
+  <li><a href="https://www.greptime.com/blogs/2026-09-08-agent-rca-bench-interface-semantic-layer">Agent RCA Bench (Greptime)</a>：同じモデルでも、問い合わせ手段をSQLにすると誤診断と入力量が減った比較（案2）</li>
+  <li><a href="https://arxiv.org/pdf/2608.21310">Beyond Fault Localization: A Trajectory-Level Study of LLM Agents for Microservice RCA</a>：正常期間との比較を検証手順に組み込み、慢性的なエラーを原因から除外（案3）</li>
+  <li><a href="https://zbchern.github.io/papers/fse25a.pdf">L4: Diagnosing Large-scale LLM Training Failures via Automated Log Analysis</a>：障害を示すログが低頻度とは限らないという分析（案3）</li>
+  <li><a href="https://github.com/copyleftdev/tailx">tailx (GitHub)</a>：Drainによるテンプレート集約で数万行を数十種類に縮める実装例（案1）</li>
+  <li><a href="https://www.splunk.com/en_us/blog/learn/log-file-analysis-llms.html">How to Use LLMs for Log File Analysis (Splunk)</a>：チャンク分割と階層要約の一般的な手順（付録A 階層要約）</li>
+</ul>
+</main>
+</div>

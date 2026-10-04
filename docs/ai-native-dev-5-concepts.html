@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI中心開発の5つの原則</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f3ee; --paper:#fffdf9; --ink:#1c2230; --ink2:#3b4456; --muted:#687080;
+  --line:#d8d2c4; --soft:#eeeae0;
+  --c1:#2f5d8a; --c2:#23786a; --c3:#b45f25; --c4:#6a4d9e; --c5:#a63b3b;
+  --code:#f1eee6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#13161c; --paper:#1a1e26; --ink:#e7e9ee; --ink2:#c2c7d1; --muted:#98a0ad;
+    --line:#343b48; --soft:#222733;
+    --c1:#80aad8; --c2:#5ebfae; --c3:#e59a63; --c4:#a98ddb; --c5:#e07b7b;
+    --code:#20252f;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#13161c; --paper:#1a1e26; --ink:#e7e9ee; --ink2:#c2c7d1; --muted:#98a0ad;
+  --line:#343b48; --soft:#222733;
+  --c1:#80aad8; --c2:#5ebfae; --c3:#e59a63; --c4:#a98ddb; --c5:#e07b7b;
+  --code:#20252f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Noto Sans JP","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",sans-serif;
+  line-height:1.85;font-size:16px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px 80px}
+header.hero{padding:56px 0 28px;border-bottom:1px solid var(--line);margin-bottom:28px}
+.eyebrow{font-size:13px;letter-spacing:.12em;color:var(--muted);font-weight:500}
+h1{font-size:34px;line-height:1.35;margin:10px 0 14px;letter-spacing:.01em}
+.lead{color:var(--ink2);font-size:16.5px;max-width:760px}
+nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 0}
+nav.toc a{font-size:13.5px;text-decoration:none;color:var(--ink);background:var(--paper);
+  border:1px solid var(--line);padding:6px 12px;border-radius:999px}
+nav.toc a:hover{border-color:var(--ink2)}
+section{margin:56px 0 0;scroll-margin-top:16px}
+.sec-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:10px}
+.num{flex:none;width:52px;height:52px;border-radius:14px;display:grid;place-items:center;
+  font-weight:700;font-size:24px;color:var(--paper);background:var(--sc)}
+h2{font-size:26px;line-height:1.4;margin:4px 0 0}
+h2 small{display:block;font-size:14px;color:var(--muted);font-weight:500;margin-top:2px}
+h3{font-size:19px;margin:36px 0 8px;padding-left:12px;border-left:4px solid var(--sc)}
+h4{font-size:16px;margin:22px 0 4px}
+p{margin:10px 0}
+.s1{--sc:var(--c1)} .s2{--sc:var(--c2)} .s3{--sc:var(--c3)} .s4{--sc:var(--c4)} .s5{--sc:var(--c5)} .s0{--sc:var(--ink2)}
+.summary{background:var(--paper);border:1px solid var(--line);border-top:4px solid var(--sc);
+  border-radius:10px;padding:14px 18px;margin:16px 0}
+.summary b.lbl{display:block;font-size:12.5px;letter-spacing:.1em;color:var(--sc);margin-bottom:4px}
+.summary ul{margin:4px 0;padding-left:20px}
+figure{margin:20px 0;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px 14px 10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-size:13px;color:var(--muted);margin-top:8px;padding:0 4px}
+.callout{background:var(--soft);border-radius:10px;padding:14px 18px;margin:16px 0}
+.callout.key{background:transparent;border:2px solid var(--sc)}
+.callout .ttl{font-weight:700;margin-bottom:4px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin:14px 0}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.card h4{margin:0 0 6px;font-size:15.5px}
+.card p{margin:4px 0;font-size:14.5px;color:var(--ink2)}
+.diff{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:14px 0}
+.diff .dh{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.diff .tag{font-size:12px;font-weight:700;color:var(--paper);background:var(--sc);border-radius:6px;padding:1px 8px;flex:none}
+.diff .dh strong{font-size:16.5px}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.vs div{border-radius:8px;padding:8px 12px;font-size:14.5px}
+.vs .old{background:var(--soft)}
+.vs .new{background:transparent;border:1.5px solid var(--sc)}
+.vs .h{font-size:12px;font-weight:700;color:var(--muted);display:block}
+table{border-collapse:collapse;width:100%;font-size:14.5px;background:var(--paper);border-radius:10px;overflow:hidden}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:700;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+pre{background:var(--code);border-radius:10px;padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.7;margin:0;
+  font-family:"JetBrains Mono","Noto Sans JP",monospace}
+.codepair{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.codepair .lab{font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:4px}
+.bad{color:var(--c5);font-weight:700} .good{color:var(--c2);font-weight:700}
+.pill{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:0 8px;color:var(--muted)}
+ol.steps{padding-left:22px} ol.steps li{margin:6px 0}
+.refs{font-size:13.5px} .refs li{margin:4px 0} .refs a{color:var(--c1)}
+footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+@media (max-width:640px){
+  h1{font-size:26px} h2{font-size:21px} .vs,.codepair{grid-template-columns:1fr}
+  .num{width:42px;height:42px;font-size:20px}
+}
+/* ---------- SVG ---------- */
+svg text{font-family:inherit}
+.b{fill:var(--paper);stroke:var(--line);stroke-width:1.5}
+.bs{fill:var(--soft);stroke:var(--line);stroke-width:1.2}
+.f1{fill:var(--c1);fill-opacity:.13;stroke:var(--c1);stroke-width:1.5}
+.f2{fill:var(--c2);fill-opacity:.13;stroke:var(--c2);stroke-width:1.5}
+.f3{fill:var(--c3);fill-opacity:.14;stroke:var(--c3);stroke-width:1.5}
+.f4{fill:var(--c4);fill-opacity:.12;stroke:var(--c4);stroke-width:1.5}
+.f5{fill:var(--c5);fill-opacity:.12;stroke:var(--c5);stroke-width:1.5}
+.dsh{stroke-dasharray:5 4}
+.t{fill:var(--ink);font-size:14px}
+.tb{font-weight:700}
+.ts{fill:var(--muted);font-size:12px}
+.tx{font-size:11px}
+.m{text-anchor:middle} .e{text-anchor:end}
+.k1{fill:var(--c1)} .k2{fill:var(--c2)} .k3{fill:var(--c3)} .k4{fill:var(--c4)} .k5{fill:var(--c5)} .kp{fill:var(--paper)}
+.a{fill:none;stroke:var(--ink2);stroke-width:1.6;marker-end:url(#ah)}
+.a1{stroke:var(--c1);marker-end:url(#ah1)} .a2{stroke:var(--c2);marker-end:url(#ah2)}
+.a3{stroke:var(--c3);marker-end:url(#ah3)} .a4{stroke:var(--c4);marker-end:url(#ah4);stroke-width:2.6}
+.a5{stroke:var(--c5);marker-end:url(#ah5)}
+.ln{fill:none;stroke:var(--line);stroke-width:1.4}
+.axis{fill:none;stroke:var(--ink2);stroke-width:1.4}
+.mk{fill:var(--ink2)} .mk1{fill:var(--c1)} .mk2{fill:var(--c2)} .mk3{fill:var(--c3)} .mk4{fill:var(--c4)} .mk5{fill:var(--c5)}
+.hbg{fill:var(--soft)} .hl{stroke:var(--muted);stroke-width:1.2;stroke-opacity:.6}
+.ring{fill:var(--c2);stroke:var(--c2);stroke-opacity:.45}
+.slab{fill:var(--c3);fill-opacity:.2;stroke:var(--c3);stroke-width:1.5}
+.hole{fill:var(--paper);stroke:var(--c3);stroke-opacity:.6}
+.track{fill:none;stroke:var(--line);stroke-width:2.2}
+.tri{fill:var(--ink2)}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+    <marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk1"/></marker>
+    <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk2"/></marker>
+    <marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk3"/></marker>
+    <marker id="ah4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk4"/></marker>
+    <marker id="ah5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk5"/></marker>
+    <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" class="hbg"/><line x1="0" y1="0" x2="0" y2="8" class="hl"/>
+    </pattern>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">生成AI中心の開発・保守 ── 基礎解説</div>
+  <h1>人間は「要件」と「確認」だけ。<br>それを成り立たせる5つのコア原則</h1>
+  <p class="lead">仕様策定から実装・検証、さらに市場での障害対応や機能エンハンスまでを生成AI中心で回す取り組みは、2025〜2026年に先行事例が一気に増えました。ただし成功例に共通するのは「賢いAIを入れたこと」ではなく、仕事の組み立て方そのものを変えたことです。本資料では、その背後にある5つの考え方を基本から解説します。</p>
+  <nav class="toc" aria-label="目次">
+    <a href="#overview">全体像</a>
+    <a href="#sdd">① スペック駆動</a>
+    <a href="#harness">② ハーネス</a>
+    <a href="#verify">③ 検証ボトルネック</a>
+    <a href="#delegate">④ 段階的な委任</a>
+    <a href="#selfheal">⑤ 自己修復ループ</a>
+    <a href="#connect">5つのつながり</a>
+    <a href="#refs">参考文献</a>
+  </nav>
+</header>
+
+<!-- ============ OVERVIEW ============ -->
+<section id="overview" class="s0">
+  <h3 style="margin-top:0">5つの原則は、1本のパイプラインの別々の部位を担う</h3>
+  <p>最初に全体の地図を示します。5つの原則はバラバラのノウハウではなく、「人間の意図が入ってから、成果物として確認され、市場で問題が起きて再び直されるまで」の流れの、それぞれの部位に対応しています。</p>
+  <figure>
+    <svg viewBox="0 0 900 400" role="img" aria-label="5つの原則の全体像">
+      <rect class="f4" x="180" y="20" width="550" height="46" rx="8"/>
+      <text class="t tb m" x="455" y="49">④ 委任の範囲 ── どこまでを人間ゲートなしでAIに任せるか</text>
+      <line class="ln dsh" x1="250" y1="66" x2="250" y2="150"/>
+      <line class="ln dsh" x1="460" y1="66" x2="460" y2="100"/>
+      <line class="ln dsh" x1="665" y1="66" x2="665" y2="150"/>
+
+      <rect class="b" x="20" y="150" width="130" height="70" rx="8"/>
+      <text class="t tb m" x="85" y="180">人間</text>
+      <text class="ts m" x="85" y="202">要件・意図</text>
+      <line class="a" x1="150" y1="185" x2="177" y2="185"/>
+
+      <rect class="f1" x="180" y="150" width="140" height="70" rx="8"/>
+      <text class="t tb m" x="250" y="180">① スペック</text>
+      <text class="ts m" x="250" y="202">意図の置き場所</text>
+      <line class="a" x1="320" y1="185" x2="357" y2="185"/>
+
+      <rect class="f2" x="360" y="100" width="200" height="170" rx="10"/>
+      <text class="t tb m" x="460" y="126">② ハーネス</text>
+      <rect class="b" x="395" y="150" width="130" height="50" rx="8"/>
+      <text class="t m" x="460" y="180">エージェント</text>
+      <text class="ts m" x="460" y="228">文脈・ツール・制約・</text>
+      <text class="ts m" x="460" y="246">フィードバック</text>
+      <line class="a" x1="560" y1="185" x2="597" y2="185"/>
+
+      <rect class="f3" x="600" y="150" width="130" height="70" rx="8"/>
+      <text class="t tb m" x="665" y="180">③ 検証</text>
+      <text class="ts m" x="665" y="202">正しさの確認</text>
+      <line class="a" x1="730" y1="185" x2="767" y2="185"/>
+
+      <rect class="b" x="770" y="150" width="110" height="70" rx="8"/>
+      <text class="t tb m" x="825" y="180">人間</text>
+      <text class="ts m" x="825" y="202">成果物の確認</text>
+      <line class="a" x1="825" y1="220" x2="825" y2="317"/>
+
+      <rect class="bs" x="770" y="320" width="110" height="60" rx="8"/>
+      <text class="t m" x="825" y="346">リリース</text>
+      <text class="ts m" x="825" y="367">市場・顧客</text>
+      <line class="a" x1="770" y1="350" x2="683" y2="350"/>
+
+      <rect class="f5" x="380" y="320" width="300" height="60" rx="8"/>
+      <text class="t tb m" x="530" y="346">⑤ 自己修復ループ</text>
+      <text class="ts m" x="530" y="367">障害・問い合わせ → 修正 → 学習</text>
+      <line class="a" x1="460" y1="320" x2="460" y2="273"/>
+      <path class="a a1" d="M380,350 H250 V223"/>
+      <text class="ts k1" x="262" y="342">仕様へ反映</text>
+    </svg>
+    <figcaption>図0：5原則の位置づけ。人間が触れるのは左端（要件）と右端（確認）だけ。その間を成立させるのが①〜③、任せる量を決めるのが④、リリース後に同じ仕組みを回し続けるのが⑤。</figcaption>
+  </figure>
+  <div class="callout">
+    <div class="ttl">この資料の読み方</div>
+    各章の冒頭に「3行まとめ」を置き、その後に基本 → 深掘り → PMSのような長寿命オンプレ製品に当てはめたときの注意点、の順で説明します。①のウォーターフォールとの違い、⑤の自己修復ループは特に詳しく扱います。
+  </div>
+</section>
+
+<!-- ============ 1. SDD ============ -->
+<section id="sdd" class="s1">
+  <div class="sec-head"><div class="num">1</div>
+    <h2>人間の意図の置き場所を「プロンプト」から「スペック」へ<small>Spec-Driven Development（SDD）</small></h2></div>
+
+  <div class="summary"><b class="lbl">3行まとめ</b><ul>
+    <li>AIがコードを書く世界では、人間の意図が「資産として残る場所」は仕様書になる。プロンプトは使い捨て、コードは意図の結果にすぎない。</li>
+    <li>順序はウォーターフォールに似て見えるが、<b>実装コストが桁違いに下がったこと</b>で、仕様は「固定する契約」から「何度でも書き直せる、検証可能な仮説」へ性格が変わる。</li>
+    <li>業務システムの現実解は「Spec-anchored」── 仕様とコードの両方を残し、変更は必ず仕様の差分から始める。</li>
+  </ul></div>
+
+  <h3>基本：なぜ「プロンプト」では足りないのか</h3>
+  <p>生成AIを使い始めた段階では、チャットで「〜を実装して」と指示し、出てきたコードを採用する、という使い方になります。このとき残るのはコードだけです。「なぜこの振る舞いにしたのか」「何を満たせば正解なのか」「何を変えてはいけないのか」は会話ログの中に埋もれ、事実上消えます。</p>
+  <p>次にその機能を変更するとき、人間もAIも<b>コードから意図を逆算する</b>しかありません。これは、コンパイル後のバイナリだけを保存してソースコードを捨てているのに近い状態です。SDDを広めたきっかけとされるOpenAIのSean Groveの講演「The New Code」も、まさにこの点を指摘しています。</p>
+
+  <figure>
+    <svg viewBox="0 0 880 310" role="img" aria-label="プロンプト駆動とスペック駆動の比較">
+      <text class="t tb k3" x="20" y="40">従来：プロンプト駆動</text>
+      <rect class="b dsh" x="20" y="58" width="170" height="62" rx="8"/>
+      <text class="t m" x="105" y="85">チャットでの指示</text>
+      <text class="ts m" x="105" y="106">（会話ログに埋もれる）</text>
+      <text class="ts k5 tb" x="160" y="54">消える</text>
+      <line class="a" x1="190" y1="89" x2="237" y2="89"/>
+      <rect class="b" x="240" y="58" width="150" height="62" rx="8"/>
+      <text class="t m" x="315" y="94">AIがコード生成</text>
+      <line class="a" x1="390" y1="89" x2="437" y2="89"/>
+      <rect class="b" x="440" y="58" width="160" height="62" rx="8"/>
+      <text class="t m" x="520" y="94">残るのはコードだけ</text>
+      <text class="ts k5" x="625" y="84">次の変更時、意図は</text>
+      <text class="ts k5" x="625" y="104">コードから逆算するしかない</text>
+
+      <text class="t tb k1" x="20" y="172">SDD：スペック駆動</text>
+      <rect class="f1" x="20" y="190" width="170" height="70" rx="8"/>
+      <text class="t tb m" x="105" y="219">スペック（版管理）</text>
+      <text class="ts m" x="105" y="241">目的・範囲・受入基準</text>
+      <line class="a" x1="190" y1="225" x2="237" y2="225"/>
+      <rect class="b" x="240" y="190" width="150" height="70" rx="8"/>
+      <text class="t m" x="315" y="230">AIがコード生成</text>
+      <line class="a" x1="390" y1="225" x2="437" y2="225"/>
+      <rect class="b" x="440" y="190" width="160" height="70" rx="8"/>
+      <text class="t m" x="520" y="219">テストで照合</text>
+      <text class="ts m" x="520" y="241">受入基準 ⇔ 挙動</text>
+      <path class="a a1" d="M520,260 V282 H105 V263"/>
+      <text class="ts k1 m" x="312" y="302">変更は「スペックの差分」から始まる</text>
+      <text class="ts k1" x="625" y="216">意図が資産として残り、</text>
+      <text class="ts k1" x="625" y="236">人間とAIの共通の拠り所になる</text>
+    </svg>
+    <figcaption>図1-1：プロンプトは一過性、スペックは永続的。SDDでは「何を・なぜ・どこまで・どう確かめるか」を版管理された文書として残す。</figcaption>
+  </figure>
+
+  <p>SDDの定義を一言で言えば、<b>変更の意図（目的・範囲・制約・受入基準）を構造化された文書として版管理し、人間とエージェントの共通の拠り所にする開発手法</b>です。GitHub Spec Kit（Specify → Plan → Tasks → Implement）、AWS Kiro（Requirements → Design → Tasks）などのツールがこの流れを型として提供しています。</p>
+
+  <h3>仕様の「成熟度」には3段階ある</h3>
+  <p>ThoughtworksのBirgitta Böckelerは、SDDを名乗るツールを調べ、同じ言葉でも3つの異なるレベルがあると整理しました。自分たちがどのレベルを目指すのかを最初に決めることが重要です。</p>
+  <figure>
+    <svg viewBox="0 0 880 270" role="img" aria-label="SDDの3段階">
+      <rect class="f1" x="20" y="150" width="260" height="100" rx="8" style="fill-opacity:.07"/>
+      <text class="t tb m" x="150" y="178">Spec-first</text>
+      <text class="t m" x="150" y="203">仕様を書いてから実装する</text>
+      <text class="ts m" x="150" y="226">完了後、仕様は役目を終える</text>
+
+      <rect class="f1" x="300" y="100" width="260" height="150" rx="8" style="fill-opacity:.16"/>
+      <text class="t tb m" x="430" y="128">Spec-anchored</text>
+      <text class="t m" x="430" y="153">仕様を残し、変更の起点にする</text>
+      <text class="ts m" x="430" y="176">仕様とコードの両方を保守する</text>
+      <text class="ts tb k1 m" x="430" y="218">★ 業務システムの現実解</text>
+
+      <rect class="f1" x="580" y="50" width="280" height="200" rx="8" style="fill-opacity:.26"/>
+      <text class="t tb m" x="720" y="78">Spec-as-source</text>
+      <text class="t m" x="720" y="103">人間が編集するのは仕様だけ</text>
+      <text class="ts m" x="720" y="126">コードは再生成される生成物</text>
+      <text class="ts m" x="720" y="178">過去のモデル駆動開発と</text>
+      <text class="ts m" x="720" y="198">同じ壁に当たる可能性</text>
+      <text class="ts m" x="450" y="30">← 投資と厳密さが増す →</text>
+    </svg>
+    <figcaption>図1-2：SDDの3段階。実務家の多くは「まずSpec-first、長期的な価値はSpec-anchored、Spec-as-sourceは実験段階」と評価している。</figcaption>
+  </figure>
+  <p>初版リリース後の保守・エンハンスまでAI中心で回したい、という目的からすると、目指すべきは<b>Spec-anchored</b>です。Spec-firstだけでは、初版の開発は速くなっても、保守フェーズで「仕様は古く、コードが正」という従来の状態に戻ってしまいます。</p>
+
+  <h3>本題：ウォーターフォールと何が違うのか</h3>
+  <p>「仕様を先に作る → 実装 → 検証」という順序は、確かにウォーターフォールと同じです。業界でも「SDDはウォーターフォールの再来ではないか」という指摘は繰り返し出ており、<b>似ている部分があることは認めたほうが議論は健全</b>です。</p>
+  <p>しかし、違いは「順序」ではなく、その順序を取らざるを得なかった<b>前提条件</b>にあります。ウォーターフォールが「最初に全部決めて固定する」やり方を取ったのは、実装とその手戻りが非常に高コストだったからです。AIがその前提を崩したことで、同じ「仕様 → 実装」という矢印の意味がまったく変わりました。</p>
+
+  <figure>
+    <svg viewBox="0 0 900 350" role="img" aria-label="ウォーターフォールとSDDのフィードバックループ比較">
+      <text class="t tb" x="20" y="30">ウォーターフォール</text>
+      <rect class="f1" x="20" y="45" width="170" height="52" rx="6"/>
+      <text class="t m" x="105" y="67">要件定義</text><text class="ts m" x="105" y="87">数週間〜数か月</text>
+      <rect class="b" x="195" y="45" width="150" height="52" rx="6"/>
+      <text class="t m" x="270" y="67">設計</text><text class="ts m" x="270" y="87">数週間</text>
+      <rect class="bs" x="350" y="45" width="250" height="52" rx="6"/>
+      <text class="t m" x="475" y="67">実装</text><text class="ts m" x="475" y="87">数か月（最も高コスト）</text>
+      <rect class="f3" x="605" y="45" width="150" height="52" rx="6"/>
+      <text class="t m" x="680" y="67">テスト</text><text class="ts k3 m" x="680" y="87">ここで初めて動く</text>
+      <rect class="b" x="760" y="45" width="110" height="52" rx="6"/>
+      <text class="t m" x="815" y="76">リリース</text>
+      <path class="a a5" d="M680,97 V128 H105 V100"/>
+      <text class="ts k5 m" x="392" y="150">要件の誤りに気づくのは実装後 → 手戻りが高くつくので「最初に全部決めて固定」するしかない</text>
+
+      <text class="t tb k1" x="20" y="202">SDD（AIが実装）</text>
+      <g>
+        <rect class="f1" x="20" y="220" width="48" height="40" rx="5"/><text class="t m" x="44" y="245">仕様</text>
+        <rect class="b" x="74" y="220" width="48" height="40" rx="5"/><text class="t m" x="98" y="245">生成</text>
+        <rect class="f3" x="128" y="220" width="48" height="40" rx="5"/><text class="t m" x="152" y="245">検証</text>
+        <path class="a a1" d="M152,260 V274 H44 V263"/>
+        <text class="ts m" x="98" y="294">変更1（数時間）</text>
+      </g>
+      <g>
+        <rect class="f1" x="192" y="220" width="48" height="40" rx="5"/><text class="t m" x="216" y="245">仕様</text>
+        <rect class="b" x="246" y="220" width="48" height="40" rx="5"/><text class="t m" x="270" y="245">生成</text>
+        <rect class="f3" x="300" y="220" width="48" height="40" rx="5"/><text class="t m" x="324" y="245">検証</text>
+        <path class="a a1" d="M324,260 V274 H216 V263"/>
+        <text class="ts m" x="270" y="294">変更2（数時間）</text>
+      </g>
+      <g>
+        <rect class="f1" x="364" y="220" width="48" height="40" rx="5"/><text class="t m" x="388" y="245">仕様</text>
+        <rect class="b" x="418" y="220" width="48" height="40" rx="5"/><text class="t m" x="442" y="245">生成</text>
+        <rect class="f3" x="472" y="220" width="48" height="40" rx="5"/><text class="t m" x="496" y="245">検証</text>
+        <path class="a a1" d="M496,260 V274 H388 V263"/>
+        <text class="ts m" x="442" y="294">変更3（数時間）</text>
+      </g>
+      <g>
+        <rect class="f1" x="536" y="220" width="48" height="40" rx="5"/><text class="t m" x="560" y="245">仕様</text>
+        <rect class="b" x="590" y="220" width="48" height="40" rx="5"/><text class="t m" x="614" y="245">生成</text>
+        <rect class="f3" x="644" y="220" width="48" height="40" rx="5"/><text class="t m" x="668" y="245">検証</text>
+        <path class="a a1" d="M668,260 V274 H560 V263"/>
+        <text class="ts m" x="614" y="294">変更4（数時間）</text>
+      </g>
+      <g>
+        <rect class="f1" x="708" y="220" width="48" height="40" rx="5"/><text class="t m" x="732" y="245">仕様</text>
+        <rect class="b" x="762" y="220" width="48" height="40" rx="5"/><text class="t m" x="786" y="245">生成</text>
+        <rect class="f3" x="816" y="220" width="48" height="40" rx="5"/><text class="t m" x="840" y="245">検証</text>
+        <path class="a a1" d="M840,260 V274 H732 V263"/>
+        <text class="ts m" x="786" y="294">変更5（数時間）</text>
+      </g>
+      <text class="ts k1 tb m" x="450" y="332">仕様は「仮説」。動くものを見て、すぐ仕様を直す。1周が短いので手戻りが安い。</text>
+    </svg>
+    <figcaption>図1-3：同じ「仕様 → 実装 → 検証」でも、1周の長さが数か月から数時間に縮むと、仕様の役割が「固定する契約」から「すぐ確かめられる仮説」に変わる。</figcaption>
+  </figure>
+
+  <p>この前提の変化から、具体的に7つの違いが生まれます。</p>
+
+  <div class="diff"><div class="dh"><span class="tag">違い①</span><strong>フィードバックループの長さが桁違い ── 仕様は「契約」ではなく「仮説」</strong></div>
+    <p>ウォーターフォールでは、仕様の誤りが判明するのは実装・テスト工程、つまり数か月後です。そのため仕様は「間違えないように、先に調べ尽くして凍結する」ものでした。SDDでは仕様を書いてから動くコードが出てくるまで数分〜数時間です。仕様の誤りは<b>動くものを見てすぐ分かり、直すのは仕様の数行</b>。仕様は「約束」ではなく「検証可能な仮説」として扱えます。</p>
+    <div class="vs"><div class="old"><span class="h">ウォーターフォール</span>先に決めて、固定する</div><div class="new"><span class="h">SDD</span>先に書いて、何度でも書き直す</div></div>
+  </div>
+
+  <div class="diff"><div class="dh"><span class="tag">違い②</span><strong>仕様の単位：システム全体ではなく「変更1件」</strong></div>
+    <p>ウォーターフォールの要件定義書はリリース全体を一度に扱います。SDDの仕様は1つのIssue・1つの機能・1つの修正といった<b>薄いスライス</b>ごとに書きます。構造的にはアジャイルのユーザーストーリーに近く、「ウォーターフォールにAIを入れたもの」よりも<b>「アジャイルに、機械が読める契約を足したもの」</b>と捉えるほうが実態に合っています。</p>
+    <div class="vs"><div class="old"><span class="h">ウォーターフォール</span>数百ページの要件定義書を一括で承認</div><div class="new"><span class="h">SDD</span>1〜2ページの仕様を変更ごとに承認</div></div>
+  </div>
+
+  <div class="diff"><div class="dh"><span class="tag">違い③</span><strong>仕様の読み手：人間ではなく「機械（＋人間）」── 曖昧さはバグになる</strong></div>
+    <p>従来の仕様書は、人から人への引き継ぎ文書です。読み手が業務知識と常識で行間を埋めてくれる前提で書かれています。エージェントも行間を埋めますが、それは「もっともらしい埋め方」であって、あなたの意図と一致する保証はありません。そのためSDDでは、<b>曖昧さは「解釈の余地」ではなく「バグ」</b>として扱い、受入基準を検証可能な形式で書いてテストに直結させます。代表的な記法がEARS（Easy Approach to Requirements Syntax）です。</p>
+    <div class="codepair">
+      <div><div class="lab"><span class="bad">✕</span> 人間向けの書き方（AIは複数の解釈をそれぞれ“それらしく”実装しうる）</div>
+<pre>印刷クォータを超過した場合は
+適切に処理すること。
+
+→ 拒否？ 警告して印刷？ 保留？
+  管理者承認？ 通知は誰に？</pre></div>
+      <div><div class="lab"><span class="good">○</span> EARS形式の受入基準（そのままテストになる）</div>
+<pre>[R-12] クォータ超過ジョブの保留
+WHEN 利用者が残クォータを超える
+     ジョブを投入したとき
+THE SYSTEM SHALL ジョブを「保留」にし、
+     利用者に超過枚数と
+     承認申請リンクを通知する</pre></div>
+    </div>
+<pre>test("R-12: クォータ超過ジョブは保留され、通知される")
+  given 残クォータ10枚の利用者
+  when  20枚のジョブを投入
+  then  ジョブ状態 == 保留
+   and  通知に「超過10枚」と申請リンクが含まれる        ← 仕様IDでテストと双方向に紐づく</pre>
+  </div>
+
+  <div class="diff"><div class="dh"><span class="tag">違い④</span><strong>仕様の寿命：納品で死ぬ → 変更の起点として生き続ける</strong></div>
+    <p>ウォーターフォールの仕様書は納品時点で凍結され、その後の改修で更新されなくなり、やがて「仕様書は信用するな、コードを読め」という状態になります。Spec-anchoredでは、<b>どんな変更も必ず仕様の差分から始まり</b>、エージェントが仕様とコードの乖離を継続的に検出します。この性質は、初版開発よりもむしろ<b>保守・エンハンスの段階で効いてきます</b>。20年ものの製品で「なぜこの挙動なのか誰も説明できない」箇所が増えるのは、まさにこの寿命の問題です。</p>
+    <div class="vs"><div class="old"><span class="h">ウォーターフォール</span>仕様は過去の記録（陳腐化する）</div><div class="new"><span class="h">SDD</span>仕様は現在の振る舞いの正本（生き続ける）</div></div>
+  </div>
+
+  <div class="diff"><div class="dh"><span class="tag">違い⑤</span><strong>仕様の階層化：「恒常ルール」と「変更仕様」を分ける</strong></div>
+    <p>ウォーターフォールでもコーディング規約やアーキテクチャ方針はありましたが、別冊として存在し、実際にはほとんど参照されませんでした。SDDでは、<b>全変更に共通して適用されるルール（Spec Kitでは“constitution＝憲法”と呼ぶ）</b>を独立した層として持ち、CLAUDE.md / AGENTS.mdなどの形で<b>毎回自動的にエージェントの文脈に載せます</b>。「読まれない規約」が「必ず読まれる規約」に変わる点が大きな違いです。</p>
+  </div>
+  <figure>
+    <svg viewBox="0 0 880 300" role="img" aria-label="仕様の階層">
+      <rect class="f1" x="20" y="20" width="560" height="58" rx="8" style="fill-opacity:.26"/>
+      <text class="t tb" x="40" y="44">恒常ルール（憲法）</text>
+      <text class="ts" x="40" y="66">アーキテクチャ原則・規約・禁止事項・セキュリティ要件 → CLAUDE.md / AGENTS.md</text>
+      <rect class="f1" x="20" y="88" width="560" height="58" rx="8" style="fill-opacity:.15"/>
+      <text class="t tb" x="40" y="112">機能仕様</text>
+      <text class="ts" x="40" y="134">振る舞い・受入基準・制約（Spec-anchoredなら機能と同じだけ生きる）</text>
+      <rect class="b" x="20" y="156" width="560" height="58" rx="8"/>
+      <text class="t tb" x="40" y="180">計画・タスク</text>
+      <text class="ts" x="40" y="202">その変更のための設計メモと作業分解（変更完了後は捨ててよい）</text>
+      <rect class="bs" x="20" y="224" width="560" height="58" rx="8"/>
+      <text class="t tb" x="40" y="248">コード・テスト</text>
+      <text class="ts" x="40" y="270">生成物。仕様IDで相互にリンクされ、乖離が検出される</text>
+      <text class="t k1" x="610" y="54">寿命：長（年単位）</text>
+      <text class="t k1" x="610" y="122">寿命：中（機能の生存期間）</text>
+      <text class="t" x="610" y="190">寿命：短（変更1件）</text>
+      <text class="t" x="610" y="258">検証の対象</text>
+      <line class="a a1" x1="850" y1="270" x2="850" y2="30"/>
+      <text class="ts k1 m" x="760" y="290" >上の層ほど人間が責任を持つ</text>
+    </svg>
+    <figcaption>図1-4：仕様の階層。寿命の違う情報を混ぜないことが、仕様を読める量に保つコツ。</figcaption>
+  </figure>
+
+  <div class="diff"><div class="dh"><span class="tag">違い⑥</span><strong>人間のレビュー対象が「コード」から「仕様」へ移る</strong></div>
+    <p>AIが1日に何十件もPRを作るようになると、全コード差分を人間が精読するのは物理的に不可能になります。そこで人間の判断力は、最もレバレッジが効く場所、つまり<b>「何を作るか」「何を満たすべきか」＝仕様</b>に集中させ、「コードが仕様どおりか」は機械的なテストや別エージェントに確かめさせます（③で詳述）。ここで大事なのは、<b>「実装の自律」と「意思決定の自律」は別物</b>だという区別です。実装はAIに任せても、何を作るかという決定は人間が持ち続けます。</p>
+    <div class="vs"><div class="old"><span class="h">ウォーターフォール</span>人間がコードと成果物をレビュー</div><div class="new"><span class="h">SDD</span>人間は仕様と「要注意点」をレビュー</div></div>
+  </div>
+
+  <div class="diff"><div class="dh"><span class="tag">違い⑦</span><strong>仕様は「作りながら発見する」ことが許される</strong></div>
+    <p>ウォーターフォールは「最初に調べ尽くせば正しい仕様が書ける」ことを前提としていました。SDDでは試作が安いので、決めきれない部分は<b>「3案作らせて、動かして比べて、選んだものを仕様に書き戻す」</b>ことができます。UIの操作感や、エッジケースの扱いなど、実物を見ないと判断できないことは多く、それを仕様策定のプロセスに組み込めるのが大きな違いです。</p>
+    <div class="vs"><div class="old"><span class="h">ウォーターフォール</span>不確実性は「事前調査」で潰す</div><div class="new"><span class="h">SDD</span>不確実性は「試作と比較」で潰し、結果を仕様へ還流</div></div>
+  </div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>観点</th><th>ウォーターフォール</th><th>SDD（AIが実装）</th></tr></thead>
+    <tbody>
+      <tr><td>仕様の性格</td><td>合意・契約として固定</td><td>検証可能な仮説として更新</td></tr>
+      <tr><td>1サイクルの長さ</td><td>数か月</td><td>数時間〜数日</td></tr>
+      <tr><td>仕様の単位</td><td>リリース全体</td><td>変更1件（薄いスライス）</td></tr>
+      <tr><td>主な読み手</td><td>人間（行間を読む）</td><td>エージェント＋人間（曖昧さ＝バグ）</td></tr>
+      <tr><td>仕様の寿命</td><td>納品で凍結・陳腐化</td><td>変更の起点として生き続ける</td></tr>
+      <tr><td>規約・原則</td><td>別冊（読まれない）</td><td>毎回自動で文脈に載る</td></tr>
+      <tr><td>人間のレビュー対象</td><td>コード・成果物</td><td>仕様・受入基準・要注意点</td></tr>
+      <tr><td>不確実性への対処</td><td>事前に調べ尽くす</td><td>作って比べて仕様に還流</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout key"><div class="ttl">コアとなる考え方（一文で）</div>
+    実装コストが限りなく下がると、ソフトウェア開発で最も価値の高い人間の成果物は「コード」ではなく「正確に書かれた意図」になる。SDDとは、その意図を<b>残る形・機械が検証できる形・変更の起点になる形</b>で管理する規律である。</div>
+
+  <h3>注意：SDDが「本当にウォーターフォール化」してしまう失敗パターン</h3>
+  <div class="grid">
+    <div class="card"><h4>巨大な仕様を一度に書く</h4><p>スライスが大きいと、フィードバックが遅れ、ウォーターフォールと同じ失敗をします。仕様は1〜2ページ、変更1件単位が目安。</p></div>
+    <div class="card"><h4>読めない仕様ファイル</h4><p>ツールが生成した冗長な仕様は誰もレビューしません。Thoughtworksも、ワークフローが重く、レビューしにくい仕様ファイルを生むツールがあると警告しています。</p></div>
+    <div class="card"><h4>仕様を直さずコードだけ直す</h4><p>急ぎの修正で仕様を飛ばすと、一気にSpec-firstに逆戻りします。「仕様の差分がないPRはマージしない」をCIで強制するのが有効です。</p></div>
+    <div class="card"><h4>恒常ルールの詰め込み</h4><p>AGENTS.md等に何でも書くと、かえって守られなくなります。実務上は150〜200項目程度が目安とされ、詳細は別ファイルへの参照にします。</p></div>
+  </div>
+
+  <h3>PMSのような既存製品への当てはめ：「逆向きSDD」から始める</h3>
+  <p>新規開発ならゼロから仕様を書けますが、20年分の振る舞いが蓄積した製品では、まず<b>現状の振る舞いを仕様として取り出す</b>必要があります。ここでもAIが使えます。エージェントにコードとテストを読ませて機能ごとの「現状仕様」を逆生成させ、ベテランが確認・修正して仕様のベースラインにする、という手順です。これは同時に、ベテランの頭の中にある暗黙知をリポジトリに移す作業、つまり<b>世代間のナレッジ移転そのもの</b>にもなります。</p>
+</section>
+
+<!-- ============ 2. HARNESS ============ -->
+<section id="harness" class="s2">
+  <div class="sec-head"><div class="num">2</div>
+    <h2>「ハーネス（環境）」を作ることがエンジニアの仕事になる<small>Harness Engineering</small></h2></div>
+
+  <div class="summary"><b class="lbl">3行まとめ</b><ul>
+    <li>エージェントの出来栄えは「モデルの賢さ」より「置かれた環境の質」で決まる。環境＝ハーネスとは、文脈・ツール・制約・フィードバックの総体。</li>
+    <li>AIが失敗したとき、人間がコードを直すのではなく「何の能力が欠けていたか」を問い、環境を直す。その改善は以後の全タスクに効くので、複利で積み上がる。</li>
+    <li>エンジニアの仕事は「コードを書く」から「エージェントが正しく働ける環境を設計する」へ移る。</li>
+  </ul></div>
+
+  <h3>基本：エージェント ＝ モデル ＋ ハーネス</h3>
+  <p>分かりやすいたとえは、<b>非常に優秀な中途入社エンジニア</b>です。地頭も技術力も高い。しかし初日にリポジトリだけ渡されても、ビルド方法、社内の暗黙ルール、過去の設計判断の経緯、テストの流し方、触ってはいけない箇所を知りません。この人の生産性を決めるのは本人の能力以上に、<b>オンボーディング資料・開発環境・レビュー体制の質</b>です。</p>
+  <p>AIエージェントも同じで、その「受け入れ環境」一式をハーネスと呼びます。馬具（harness）が馬の力を荷車に正しく伝える道具であるように、ハーネスはモデルの能力を「正しい成果物」に変換する仕組みです。</p>
+
+  <figure>
+    <svg viewBox="0 0 880 400" role="img" aria-label="ハーネスの構成要素">
+      <circle class="ring" cx="200" cy="200" r="180" style="fill-opacity:.06"/>
+      <circle class="ring" cx="200" cy="200" r="140" style="fill-opacity:.10"/>
+      <circle class="ring" cx="200" cy="200" r="100" style="fill-opacity:.15"/>
+      <circle class="ring" cx="200" cy="200" r="62" style="fill-opacity:.22"/>
+      <circle cx="200" cy="200" r="30" style="fill:var(--c2)"/>
+      <text class="t tb m kp" x="200" y="205" style="font-size:13px">モデル</text>
+      <text class="ts m" x="200" y="45" style="fill:var(--ink)">フィードバック</text>
+      <text class="ts m" x="200" y="84" style="fill:var(--ink)">ガードレール</text>
+      <text class="ts m" x="200" y="123" style="fill:var(--ink)">ツール</text>
+      <text class="ts m" x="200" y="158" style="fill:var(--ink)">コンテキスト</text>
+
+      <text class="t tb" x="420" y="40">モデル（LLM）</text>
+      <text class="ts" x="420" y="60">推論する頭脳。外部から調達でき、それ自体は差別化要因になりにくい</text>
+      <text class="t tb k2" x="420" y="108">コンテキスト ＝ 何を知っているか</text>
+      <text class="ts" x="420" y="128">AGENTS.md、設計判断の記録(ADR)、仕様、ドメイン知識、過去の障害事例</text>
+      <text class="t tb k2" x="420" y="176">ツール ＝ 何ができるか</text>
+      <text class="ts" x="420" y="196">ビルド、テスト実行、アプリ起動、ブラウザ操作(Playwright MCP)、ログ検索</text>
+      <text class="t tb k2" x="420" y="244">ガードレール ＝ 何をしてはいけないか</text>
+      <text class="ts" x="420" y="264">lint・型・依存ルール・権限・サンドボックス・コスト上限で機械的に強制</text>
+      <text class="t tb k2" x="420" y="312">フィードバック ＝ 結果をどう知るか</text>
+      <text class="ts" x="420" y="332">テスト結果、CIログ、実行時ログ、レビュー指摘。エラー文に「直し方」を書く</text>
+    </svg>
+    <figcaption>図2-1：ハーネスの4層。モデルの外側すべてがハーネスであり、エンジニアが設計・改善できるのはこの部分。</figcaption>
+  </figure>
+  <p>この考え方の説得力を示す話として、LangChainがモデルを変えずにハーネスだけを改良して、コーディングエージェントのベンチマーク順位を大きく上げたという報告があります。<b>モデルはコモディティ、差はハーネスでつく</b>というのが2026年の共通認識になりつつあります。</p>
+
+  <h3>先行事例：OpenAIの「人間が書いたコード0行」実験</h3>
+  <p>この考え方を最も徹底して実証したのが、OpenAIの社内チームによる実験です。5か月間、<b>人間が手でコードを1行も書かない</b>という制約のもとで社内向けベータ製品を作り、約100万行・約1,500件のPRを、当初3名（後に7名）で出荷しました。手書きの場合の約10分の1の期間で作れたと推定しています。</p>
+  <p>重要なのは、その過程での学びです。<b>序盤は想定より進みが遅かった</b>。原因はモデルの能力不足ではなく、環境が不十分だったこと ── 目標に向かって進むための道具、抽象化、内部構造が欠けていたことでした。そこでチームの主な仕事は「エージェントが役に立つ仕事をできるようにすること」になりました。</p>
+
+  <h3>発想の転換：失敗したら「コードを直す」のではなく「環境を直す」</h3>
+  <p>ハーネス思考の核心はここです。AIの出力が期待と違ったとき、従来の感覚では人間がサッと手で直してしまいます。これは目の前の問題は解決しますが、次のタスクでまた同じ失敗が起きます。改善が何も蓄積されません。</p>
+  <p>OpenAIのチームは、失敗のたびに<b>「どの能力が欠けているのか。それをエージェントにとって読める形・強制できる形にするにはどうするか」</b>を問いました。手で直すことは「制約上できない」ので、必ず環境を直すしかなかったのです。</p>
+  <figure>
+    <svg viewBox="0 0 880 270" role="img" aria-label="失敗への2つの対応">
+      <text class="t tb k5 m" x="220" y="30">従来：失敗 → 人がコードを直す</text>
+      <rect class="b" x="30" y="55" width="150" height="46" rx="8"/>
+      <text class="t m" x="105" y="83">AIの出力が失敗</text>
+      <line class="a" x1="180" y1="78" x2="237" y2="78"/>
+      <rect class="b" x="240" y="55" width="160" height="46" rx="8"/>
+      <text class="t m" x="320" y="83">人が手で修正</text>
+      <line class="a" x1="320" y1="101" x2="320" y2="147"/>
+      <rect class="f5" x="240" y="150" width="160" height="46" rx="8"/>
+      <text class="t m" x="320" y="178">次も同じ失敗</text>
+      <path class="a a5 dsh" d="M240,173 H105 V104"/>
+      <text class="ts k5 tb m" x="200" y="232">改善が蓄積しない（毎回ゼロから）</text>
+
+      <line class="ln dsh" x1="440" y1="20" x2="440" y2="250"/>
+
+      <text class="t tb k2 m" x="665" y="30">ハーネス思考：失敗 → 環境を直す</text>
+      <rect class="b" x="470" y="55" width="150" height="46" rx="8"/>
+      <text class="t m" x="545" y="83">AIの出力が失敗</text>
+      <line class="a" x1="620" y1="78" x2="677" y2="78"/>
+      <rect class="f2" x="680" y="55" width="180" height="46" rx="8"/>
+      <text class="t m" x="770" y="83">何の能力が欠けている？</text>
+      <line class="a" x1="770" y1="101" x2="770" y2="147"/>
+      <rect class="f2" x="680" y="150" width="180" height="66" rx="8"/>
+      <text class="t tb m" x="770" y="175">環境を直す</text>
+      <text class="ts m" x="770" y="198">文書・lint・ツール・テスト</text>
+      <line class="a a2" x1="680" y1="183" x2="623" y2="183"/>
+      <rect class="f2" x="470" y="160" width="150" height="46" rx="8"/>
+      <text class="t m" x="545" y="188">以後の全タスク改善</text>
+      <text class="ts k2 tb m" x="665" y="244">改善が複利で積み上がる</text>
+    </svg>
+    <figcaption>図2-2：同じ失敗に対する2つの対応。右側は1回の手間が以後すべてのタスクに効く「投資」になる。</figcaption>
+  </figure>
+
+  <figure>
+    <svg viewBox="0 0 760 310" role="img" aria-label="ハーネス投資の複利曲線">
+      <path class="axis" d="M60,30 V270 H720"/>
+      <text class="ts" x="70" y="38">生産性</text>
+      <text class="ts e" x="720" y="292">時間 →</text>
+      <path d="M60,190 C300,182 500,176 720,170" style="fill:none;stroke:var(--c3);stroke-width:2.4;stroke-dasharray:7 5"/>
+      <text class="ts k3 tb" x="600" y="162">都度、人が手直し</text>
+      <path d="M60,230 C200,248 280,232 360,192 S560,80 720,45" style="fill:none;stroke:var(--c2);stroke-width:3"/>
+      <text class="ts k2 tb e" x="715" y="34">ハーネスに投資</text>
+      <text class="ts k3" x="72" y="258">序盤は遅い（環境の不足を埋める期間）</text>
+      <text class="ts k2" x="150" y="130">制約・ツール・知識が蓄積し加速 →</text>
+    </svg>
+    <figcaption>図2-3：ハーネス投資の効果は複利的。OpenAIの事例でも序盤は遅く、環境が整うにつれて加速した。最初の数か月「速くならない」のは想定内。</figcaption>
+  </figure>
+
+  <h3>ハーネスを設計する6つの原則</h3>
+  <div class="grid">
+    <div class="card"><h4>1. リポジトリが唯一の記録</h4><p>Slackでの合意、ベテランの頭の中、共有フォルダのExcel設計メモは、エージェントにとって「存在しない」。判断の経緯はADRとしてリポジトリに置く。</p></div>
+    <div class="card"><h4>2. 文章より機械的な強制</h4><p>「このレイヤーからDBを直接触らない」を文書に書くより、依存ルールをlintで落とすほうが確実。lintのエラーメッセージに<b>直し方</b>を書けば、エージェントはそれを読んで自己修正する。</p></div>
+    <div class="card"><h4>3. 段階的な開示</h4><p>AGENTS.mdは百科事典ではなく<b>地図（目次）</b>。短い入口から詳細ドキュメントへリンクし、必要なときに必要な分だけ読ませる。</p></div>
+    <div class="card"><h4>4. エントロピーの管理</h4><p>エージェントは既存コードのパターンを真似るので、悪いパターンも増殖する。定期実行の「掃除エージェント」が規約違反や古いドキュメントを検出し、修正PRを出す。</p></div>
+    <div class="card"><h4>5. エージェント自身が確かめられる</h4><p>アプリを起動し、画面を操作し、ログやメトリクスを見る手段を与える。自分の変更の結果を自分で観測できないエージェントは、推測でしか直せない。</p></div>
+    <div class="card"><h4>6. 権限と予算の枠</h4><p>サンドボックス内で動かし、本番環境への権限は与えない。時間・CI実行量・API費用に上限を設け、超えたら人間にエスカレーションする。</p></div>
+  </div>
+
+  <div class="callout key"><div class="ttl">コアとなる考え方（一文で）</div>
+    AI時代のエンジニアリングとは「正しいコードを書くこと」ではなく、<b>「正しいコードが繰り返し生まれる環境を作ること」</b>である。失敗はコードではなく環境の欠陥として扱い、その修正を資産として積み上げる。</div>
+
+  <h3>PMSへの示唆</h3>
+  <p>長寿命製品で一番のハーネス課題は、原則1の「リポジトリの外にある知識」です。製品固有の業務ルール、顧客環境ごとの癖、過去の障害の経緯、複合機メーカーごとの挙動差などが人の頭の中にある限り、エージェントはそれを踏まえた判断ができません。つまり<b>ハーネス整備と世代間ナレッジ移転は、別々の取り組みではなく同じ作業</b>です。また、原則5の「自分で確かめられる」手段としては、Playwright MCPによるWebUI操作や、実機に代わるデバイスシミュレータが中核的なハーネス部品になります。</p>
+</section>
+
+<!-- ============ 3. VERIFY ============ -->
+<section id="verify" class="s3">
+  <div class="sec-head"><div class="num">3</div>
+    <h2>ボトルネックは「生成」から「検証」へ移る<small>Verification is the new bottleneck</small></h2></div>
+
+  <div class="summary"><b class="lbl">3行まとめ</b><ul>
+    <li>コードを作る速度がAIで何倍にもなると、全体の速度は「それが正しいかを確かめる速度」で頭打ちになる。</li>
+    <li>検証は単一の手段では解決しない。安く速い機械的検証を何層も重ね、人間は機械が判断できない「意図」と「リスク」だけを見る。</li>
+    <li>「作る役」と「確かめる役」を別のエージェントに分け、検証方法は実装より先に設計する。</li>
+  </ul></div>
+
+  <h3>基本：パイプラインは一番細いところで詰まる</h3>
+  <p>水道管にたとえると分かりやすくなります。管の一部をどれだけ太くしても、流れる水の量は一番細い部分で決まります。これまでのソフトウェア開発では「実装」が最も細い部分でした。AIがそこを何倍にも太くした結果、今度は<b>レビュー・テスト・受入確認といった「検証」が一番細い部分</b>になりました。</p>
+  <figure>
+    <svg viewBox="0 0 880 260" role="img" aria-label="検証がボトルネックになる図">
+      <rect class="b" x="20" y="95" width="90" height="60" rx="8"/>
+      <text class="t m" x="65" y="130">要件</text>
+      <line class="a" x1="110" y1="125" x2="127" y2="125"/>
+      <rect class="f2" x="130" y="60" width="240" height="130" rx="10"/>
+      <text class="t tb m" x="250" y="120">生成</text>
+      <text class="ts m" x="250" y="142">AIで大幅に拡張された</text>
+      <polygon points="370,60 460,105 460,145 370,190" style="fill:var(--soft);stroke:var(--line)"/>
+      <g class="f3" style="stroke-width:1">
+        <rect x="380" y="85" width="12" height="12" rx="2"/><rect x="396" y="85" width="12" height="12" rx="2"/>
+        <rect x="380" y="101" width="12" height="12" rx="2"/><rect x="396" y="101" width="12" height="12" rx="2"/><rect x="412" y="101" width="12" height="12" rx="2"/>
+        <rect x="380" y="117" width="12" height="12" rx="2"/><rect x="396" y="117" width="12" height="12" rx="2"/><rect x="412" y="117" width="12" height="12" rx="2"/><rect x="428" y="117" width="12" height="12" rx="2"/>
+        <rect x="380" y="133" width="12" height="12" rx="2"/><rect x="396" y="133" width="12" height="12" rx="2"/><rect x="412" y="133" width="12" height="12" rx="2"/>
+        <rect x="380" y="149" width="12" height="12" rx="2"/><rect x="396" y="149" width="12" height="12" rx="2"/>
+      </g>
+      <rect class="f3" x="460" y="105" width="140" height="40" rx="6" style="fill-opacity:.35"/>
+      <text class="t tb m" x="530" y="131">検証</text>
+      <text class="ts k3 m" x="530" y="95">レビュー・テスト・受入確認</text>
+      <line class="a" x1="600" y1="125" x2="637" y2="125"/>
+      <rect class="b" x="640" y="95" width="110" height="60" rx="8"/>
+      <text class="t m" x="695" y="130">リリース</text>
+      <text class="ts m" x="440" y="222">□ ＝ 検証待ちで滞留するPR。生成をいくら速くしても、全体の速度は検証で決まる。</text>
+    </svg>
+    <figcaption>図3-1：生成が太くなると、検証がボトルネックになる。OpenAIの実験でも、制約はコードの生産量から「人間のQA能力」へ移ったと報告されている。</figcaption>
+  </figure>
+  <p>Anthropicの「2026 Agentic Coding Trends Report」も、検証を新たなボトルネックとして明示しています。コードを書くことの難しさが、生成されたコードが正しいかを判断することの難しさへ移っている、という指摘です。</p>
+
+  <h3>なぜ検証は「難しく」なったのか</h3>
+  <p>単に量が増えただけではありません。検証そのものの難易度が上がっています。</p>
+  <div class="grid">
+    <div class="card"><h4>量の問題</h4><p>人間が1日に集中して精読できる差分量には限界がある。AIの出力量はそれを簡単に超える。</p></div>
+    <div class="card"><h4>もっともらしさの問題</h4><p>AIのコードは整っていて「見た目が正しい」。人間が経験的に持っている「何か変だ」という違和感センサーが働きにくい。</p></div>
+    <div class="card"><h4>意図は直接測れない</h4><p>テストが通ることは、意図どおりであることの<b>代理指標</b>にすぎない。本当に確かめたいのは「人間の意図を満たしたか」だが、それは直接測定できない。</p></div>
+    <div class="card"><h4>「テストに合わせる」問題</h4><p>エージェントはテストを通すことに最適化しうる。テストを弱める、特定の入力だけ特別扱いする、といった「指標だけ満たす」挙動が起きる（グッドハートの法則）。</p></div>
+  </div>
+  <p>2026年の研究論文でも、「解を見つけるより検証するほうが易しい」という計算機科学の古典的な直感が、コーディングエージェントでは<b>逆転しつつある</b>と論じられています。生成は易しくなり、信頼できる検証のほうが難しくなった、ということです。そしてこの論文は、検証を一度に解決する単一の仕組み（銀の弾丸）はないとも結論づけています。</p>
+
+  <h3>考え方①：多層防御（スイスチーズモデル）</h3>
+  <p>単一の手段で完璧な検証ができない以上、<b>穴のある防御を何層も重ねて、全部の穴を同時にすり抜ける確率を下げる</b>しかありません。これは航空や医療の安全工学で使われる「スイスチーズモデル」と同じ考え方です。</p>
+  <figure>
+    <svg viewBox="0 0 900 320" role="img" aria-label="多層防御のスイスチーズモデル">
+      <rect class="slab" x="68" y="40" width="44" height="170" rx="10"/>
+      <rect class="slab" x="203" y="40" width="44" height="170" rx="10"/>
+      <rect class="slab" x="338" y="40" width="44" height="170" rx="10"/>
+      <rect class="slab" x="473" y="40" width="44" height="170" rx="10"/>
+      <rect class="slab" x="608" y="40" width="44" height="170" rx="10"/>
+      <rect class="slab" x="743" y="40" width="44" height="170" rx="10" style="fill-opacity:.35"/>
+      <circle class="hole" cx="90" cy="80" r="9"/><circle class="hole" cx="90" cy="130" r="9"/><circle class="hole" cx="90" cy="180" r="9"/>
+      <circle class="hole" cx="225" cy="80" r="9"/><circle class="hole" cx="225" cy="130" r="9"/><circle class="hole" cx="225" cy="180" r="9"/>
+      <circle class="hole" cx="360" cy="130" r="9"/><circle class="hole" cx="360" cy="180" r="9"/><circle class="hole" cx="360" cy="60" r="6"/>
+      <circle class="hole" cx="495" cy="130" r="9"/><circle class="hole" cx="495" cy="180" r="9"/><circle class="hole" cx="495" cy="95" r="6"/>
+      <circle class="hole" cx="630" cy="180" r="9"/><circle class="hole" cx="630" cy="110" r="6"/>
+      <circle class="hole" cx="765" cy="70" r="6"/>
+      <line class="a a5" x1="20" y1="80" x2="336" y2="80"/>
+      <line class="a a5" x1="20" y1="130" x2="606" y2="130"/>
+      <line class="a a5" x1="20" y1="180" x2="741" y2="180"/>
+      <text class="t tb m" x="90" y="236">静的解析・型</text><text class="ts tx m" x="90" y="254">数秒・全件</text>
+      <text class="t tb m" x="225" y="236">単体テスト</text><text class="ts tx m" x="225" y="254">数分・全件</text>
+      <text class="t tb m" x="360" y="236">契約テスト</text><text class="ts tx m" x="360" y="254">API・境界の約束</text>
+      <text class="t tb m" x="495" y="236">E2E・シミュレータ</text><text class="ts tx m" x="495" y="254">実利用に近い操作</text>
+      <text class="t tb m" x="630" y="236">独立検証AI</text><text class="ts tx m" x="630" y="254">仕様への適合</text>
+      <text class="t tb m" x="765" y="236">人間</text><text class="ts tx m" x="765" y="254">意図・リスクの判断</text>
+      <text class="ts" x="60" y="298">← 安く・速く・全件に適用</text>
+      <text class="ts e" x="800" y="298">高く・遅く・要所だけ →</text>
+    </svg>
+    <figcaption>図3-2：各層には必ず穴がある（赤矢印＝すり抜ける欠陥）。安い層を前に、高価な人間の判断を最後に置き、人間には機械が止められなかったものだけが届くようにする。</figcaption>
+  </figure>
+  <div class="tbl"><table>
+    <thead><tr><th>層</th><th>捕まえられるもの</th><th>捕まえられないもの</th></tr></thead>
+    <tbody>
+      <tr><td>静的解析・型・lint</td><td>型の不整合、禁止された依存、既知の危険パターン</td><td>振る舞いの誤り</td></tr>
+      <tr><td>単体テスト</td><td>関数単位のロジック誤り、境界値</td><td>部品同士の組み合わせの誤り</td></tr>
+      <tr><td>契約テスト</td><td>API・モジュール境界の約束違反、互換性破壊</td><td>ユーザー操作の流れ全体</td></tr>
+      <tr><td>E2E・シミュレータ</td><td>画面操作・実機連携を含む一連のシナリオの破綻</td><td>そもそも仕様が間違っているケース</td></tr>
+      <tr><td>独立検証エージェント</td><td>仕様との不一致、対症療法、テストの骨抜き、規約違反</td><td>仕様に書かれていない意図</td></tr>
+      <tr><td>人間</td><td>意図とのずれ、ビジネス上のリスク、前例のない状況</td><td>（量が多いと何も捕まえられなくなる）</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>考え方②：「作る役」と「確かめる役」を分ける</h3>
+  <p>SDDの実践で最も活用されていないパターンは、作業のチェックを別のエージェントに割り当てることだと言われます。同じエージェントに自分の成果物をレビューさせると、自分が実装中に積み上げた思い込みや「こうすればよいはず」という理由付けをそのまま引き継いでしまいます。人間の自己レビューが甘くなるのと同じです。</p>
+  <figure>
+    <svg viewBox="0 0 880 280" role="img" aria-label="実装と検証の分離">
+      <rect class="f1" x="20" y="110" width="130" height="60" rx="8"/>
+      <text class="t tb m" x="85" y="136">スペック</text>
+      <text class="ts m" x="85" y="156">受入基準</text>
+      <line class="a" x1="150" y1="125" x2="207" y2="85"/>
+      <rect class="f2" x="210" y="30" width="190" height="80" rx="8"/>
+      <text class="t tb m" x="305" y="56">実装エージェント</text>
+      <text class="ts m" x="305" y="78">試行錯誤・判断の経緯</text>
+      <text class="ts m" x="305" y="96">（長い文脈、思い込みも含む）</text>
+      <line class="a" x1="400" y1="70" x2="447" y2="70"/>
+      <rect class="b" x="450" y="40" width="160" height="60" rx="8"/>
+      <text class="t tb m" x="530" y="66">成果物</text>
+      <text class="ts m" x="530" y="86">差分・テスト結果・ログ</text>
+      <line class="a" x1="530" y1="100" x2="530" y2="167"/>
+      <line class="a a1" x1="150" y1="155" x2="447" y2="208"/>
+      <text class="ts k1 m" x="290" y="210">仕様はそのまま渡す</text>
+      <text class="ts k5 m" x="305" y="144">✕ 実装の思考過程は渡さない</text>
+      <rect class="f3" x="450" y="170" width="180" height="80" rx="8"/>
+      <text class="t tb m" x="540" y="196">検証エージェント</text>
+      <text class="ts m" x="540" y="218">別の文脈で起動</text>
+      <text class="ts m" x="540" y="236">実装の言い訳を知らない</text>
+      <line class="a" x1="630" y1="205" x2="697" y2="170"/>
+      <rect class="b" x="700" y="110" width="160" height="80" rx="8"/>
+      <text class="t tb m" x="780" y="140">人間</text>
+      <text class="ts m" x="780" y="162">判定と「要注意点」</text>
+      <text class="ts m" x="780" y="180">だけを見る</text>
+    </svg>
+    <figcaption>図3-3：検証エージェントには「仕様」と「成果物」だけを渡し、実装側の理由付けは渡さない。人間は検証エージェントの判定と、人が見るべき要注意点のリストだけを確認する。</figcaption>
+  </figure>
+  <p>これは、開発とQAを別組織にする、重要な操作にダブルチェックを入れる、といった昔からの品質管理の知恵をAIに適用したものです。さらに、実装と検証で<b>異なるモデルを使う</b>と、同じ系統の見落としを共有しにくくなるため、より効果的です。</p>
+
+  <h3>考え方③：検証は「実装より先に」設計する</h3>
+  <p>ここで①のSDDとつながります。受入基準（EARS等）を仕様として先に書き、そこからテストを先に作っておけば、実装の正しさを判定する基準がエージェントの作業前に確定します。原則として<b>「検証方法を示せないタスクは、AIに委任できない」</b>と考えてよいでしょう。</p>
+  <p>「テストに合わせる」問題への対策も、この段階で組み込みます。</p>
+  <ul>
+    <li><b>受入テストを保護する</b>：受入テストのディレクトリはエージェントが変更できないようにし、変更には人間の承認を要求する</li>
+    <li><b>テストをテストする</b>：ミューテーションテスト（コードにわざとバグを入れて、テストが検出できるか確かめる）でテストの骨抜きを検出する</li>
+    <li><b>差分の性質を監視する</b>：テストの削除・アサーションの弱体化・例外の握りつぶしを検出したら、自動で要注意フラグを立てる</li>
+  </ul>
+
+  <h3>考え方④：人間の注意は「意図」と「リスク」にだけ使う</h3>
+  <p>人間の検証能力は最も希少な資源です。それを定型的なチェックで消費してはいけません。</p>
+  <div class="vs" style="margin-bottom:10px">
+    <div class="old"><span class="h">人間が見なくてよいもの（機械に任せる）</span>コードスタイル、命名、既知パターンの誤り、テスト網羅率、規約違反、ビルドの成否</div>
+    <div class="new"><span class="h">人間が見るべきもの</span>意図との一致、境界ケースの扱い、前例のない状況、元に戻せない判断、顧客影響の大きい変更</div>
+  </div>
+  <p>検証エージェントに「このPRで人間が確認すべき点を3つ挙げよ」と出力させ、人間はそこだけを見る運用にすると、レビュー負荷が大きく下がります。</p>
+
+  <div class="callout key"><div class="ttl">コアとなる考え方（一文で）</div>
+    AIが生成を安くした結果、<b>「正しさを確かめる能力」がチームの生産性の上限を決める</b>ようになった。検証は後工程の作業ではなく、実装より先に設計し、多層化し、自動化すべき最重要の資産である。</div>
+
+  <h3>PMSへの示唆</h3>
+  <p>プリント管理システムは、複合機という外部ハードウェア、各社のドライバ、顧客ごとのネットワーク・認証基盤と結びついています。この「実機でしか確かめられない」部分が、検証の最も細い部分になりがちです。複合機のシミュレータ（SNMP・IPP等の応答を模擬するもの）や、実機操作の録画・再生の仕組みに投資することは、<b>AI中心化の上限そのものを引き上げる投資</b>になります。</p>
+</section>
+
+<!-- ============ 4. DELEGATE ============ -->
+<section id="delegate" class="s4">
+  <div class="sec-head"><div class="num">4</div>
+    <h2>委任は「全部か無か」ではなく段階的に広げる<small>Delegation Gap</small></h2></div>
+
+  <div class="summary"><b class="lbl">3行まとめ</b><ul>
+    <li>開発者はAIを業務の大半で使っているのに、最後まで任せきれる仕事はごく一部。この差（Delegation Gap）を埋めることが次の課題。</li>
+    <li>何を任せられるかは「検証のしやすさ」と「影響範囲」の2軸で決まる。委任範囲は宣言ではなく、検証の自動化と影響の隔離という<b>エンジニアリングで広げる</b>もの。</li>
+    <li>信頼は実績データで稼ぐ。領域ごとに自律レベルを設定し、実績に応じて昇格・降格させる。</li>
+  </ul></div>
+
+  <h3>基本：「使っている」と「任せられる」の間にある大きな溝</h3>
+  <p>Anthropicのレポートによれば、開発者は業務のおよそ60%でAIを使っていると答える一方、<b>最後まで完全に任せられると答えるタスクは0〜20%</b>にとどまります。</p>
+  <figure>
+    <svg viewBox="0 0 760 195" role="img" aria-label="Delegation Gap">
+      <text class="t" x="20" y="38">業務の中でAIを使っている割合</text>
+      <rect class="bs" x="20" y="50" width="600" height="26" rx="5"/>
+      <rect x="20" y="50" width="360" height="26" rx="5" style="fill:var(--c4);fill-opacity:.75"/>
+      <text class="t tb" x="630" y="69">約60%</text>
+      <text class="t" x="20" y="132">最後まで完全に任せられる割合</text>
+      <rect class="bs" x="20" y="144" width="600" height="26" rx="5"/>
+      <rect x="20" y="144" width="120" height="26" rx="5" style="fill:var(--c4);fill-opacity:.4"/>
+      <text class="t tb" x="630" y="163">0〜20%</text>
+      <line class="ln dsh" x1="140" y1="114" x2="140" y2="80" style="stroke:var(--c5)"/>
+      <line class="ln dsh" x1="380" y1="80" x2="380" y2="114" style="stroke:var(--c5)"/>
+      <path d="M140,106 H380" class="a a5" style="marker-start:url(#ah5)"/>
+      <text class="ts k5 tb m" x="260" y="100">Delegation Gap</text>
+    </svg>
+    <figcaption>図4-1：AIの「利用」と「完全委任」の差。この差の大部分は、AIの能力ではなく「検証できない」「文脈が足りない」「信頼の根拠がない」ことから生じている。</figcaption>
+  </figure>
+  <p>このギャップの原因は、主に3つです。<b>①正しいと確かめる手段がない</b>（③の問題）、<b>②AIに必要な文脈が足りない</b>（②の問題）、<b>③任せても大丈夫だという実績・根拠がない</b>。つまりDelegation Gapは、①〜③の原則がどれだけ整っているかの「結果」として現れる指標でもあります。</p>
+
+  <h3>自律レベルの階段</h3>
+  <p>自動運転に「レベル0〜5」があるように、AIへの委任にも段階があります。目指すのは「全部をL5にする」ことではなく、<b>仕事の種類ごとに適切なレベルを設定し、少しずつ上げていく</b>ことです。</p>
+  <figure>
+    <svg viewBox="0 0 900 330" role="img" aria-label="自律レベルの階段">
+      <rect class="f4" x="20"  y="230" width="140" height="80" rx="6" style="fill-opacity:.07"/>
+      <rect class="f4" x="166" y="192" width="140" height="118" rx="6" style="fill-opacity:.12"/>
+      <rect class="f4" x="312" y="154" width="140" height="156" rx="6" style="fill-opacity:.17"/>
+      <rect class="f4" x="458" y="116" width="140" height="194" rx="6" style="fill-opacity:.24"/>
+      <rect class="f4" x="604" y="78"  width="140" height="232" rx="6" style="fill-opacity:.31"/>
+      <rect class="f4" x="750" y="40"  width="140" height="270" rx="6" style="fill-opacity:.40"/>
+      <text class="t tb m" x="90"  y="254">L0 補完</text><text class="ts m" x="90" y="276">数行のコード補完</text><text class="ts m" x="90" y="294">人が全部書く</text>
+      <text class="t tb m" x="236" y="216">L1 対話支援</text><text class="ts m" x="236" y="238">質問・説明・</text><text class="ts m" x="236" y="256">断片の生成</text>
+      <text class="t tb m" x="382" y="178">L2 監督下の実行</text><text class="ts m" x="382" y="200">IDEで逐次実行</text><text class="ts m" x="382" y="218">人が見ながら</text>
+      <text class="t tb m" x="528" y="140">L3 非同期委任</text><text class="ts m" x="528" y="162">Issue → PR</text><text class="ts m" x="528" y="180">人がレビュー</text>
+      <text class="t tb m" x="674" y="102">L4 条件付き自律</text><text class="ts m" x="674" y="124">低リスク領域は</text><text class="ts m" x="674" y="142">自動マージ</text>
+      <text class="t tb m" x="820" y="64">L5 完全自律</text><text class="ts m" x="820" y="86">人は要件と</text><text class="ts m" x="820" y="104">結果確認のみ</text>
+      <text class="ts k4 tb m" x="528" y="106">▼ 2026年の主戦場</text>
+      <text class="ts k4 tb m" x="820" y="30">▼ 目指す姿（定型領域）</text>
+    </svg>
+    <figcaption>図4-2：AIへの委任の自律レベル。現在の業界の主戦場はL3（Issueを割り当てるとAIがPRを作り、人がレビューする）からL4への移行。</figcaption>
+  </figure>
+  <p>業界の現在地はL3です。GitHub Copilotのクラウドエージェントなどでは、Issueを割り当てるとサンドボックス環境で実装・テストを行い、ドラフトPRを作ってレビューを依頼するところまでが標準的な機能になっています。「人間は要件入力と成果物確認のみ」という目標は、<b>定型的な領域ではL4〜L5、判断が必要な領域ではL3</b>、という組み合わせで実現するのが現実的です。</p>
+
+  <h3>何を委任できるかは「2つの軸」で決まる</h3>
+  <p>タスクを委任できるかどうかは、「AIが得意そうか」という感覚ではなく、次の2軸で判断します。</p>
+  <figure>
+    <svg viewBox="0 0 720 470" role="img" aria-label="委任判断の2軸マトリクス">
+      <rect class="f5" x="90"  y="30"  width="300" height="190" style="fill-opacity:.09"/>
+      <rect class="f3" x="390" y="30"  width="300" height="190" style="fill-opacity:.10"/>
+      <rect class="f1" x="90"  y="220" width="300" height="190" style="fill-opacity:.09"/>
+      <rect class="f2" x="390" y="220" width="300" height="190" style="fill-opacity:.16"/>
+      <text class="t tb m" x="240" y="110">人間主導 ＋ AI支援</text>
+      <text class="ts m" x="240" y="135">例：アーキテクチャ変更、</text>
+      <text class="ts m" x="240" y="155">顧客データ移行の方針</text>
+      <text class="t tb m" x="540" y="110">委任 ＋ 人間承認</text>
+      <text class="ts m" x="540" y="135">例：課金・権限まわりの</text>
+      <text class="ts m" x="540" y="155">再現テスト付きバグ修正</text>
+      <text class="t tb m" x="240" y="300">委任 ＋ 抜き取り確認</text>
+      <text class="ts m" x="240" y="325">例：画面文言の調整、</text>
+      <text class="ts m" x="240" y="345">ログ出力の改善</text>
+      <text class="t tb m" x="540" y="300">完全委任</text>
+      <text class="ts m" x="540" y="325">例：テスト追加、依存更新、</text>
+      <text class="ts m" x="540" y="345">定型リファクタリング</text>
+      <line class="a a4" x1="300" y1="58" x2="470" y2="58"/>
+      <text class="ts k4 tb m" x="385" y="48">検証を自動化して右へ</text>
+      <line class="a a4" x1="665" y1="160" x2="665" y2="280"/>
+      <text class="ts k4 tb e" x="652" y="214">影響を隔離して下へ</text>
+      <text class="t m" x="390" y="450">検証のしやすさ（自動で正誤判定できるか） →</text>
+      <text class="t m" x="40" y="220" transform="rotate(-90 40 220)">影響範囲・リスク →</text>
+      <text class="ts" x="95" y="428">難しい</text><text class="ts e" x="685" y="428">易しい</text>
+      <text class="ts e" x="82" y="405">小</text><text class="ts e" x="82" y="45">大</text>
+    </svg>
+    <figcaption>図4-3：委任判断の2軸。右下ほど委任しやすい。重要なのは紫の矢印で、タスクを「右下へ移動させる」ことが委任範囲を広げる唯一の正攻法になる。</figcaption>
+  </figure>
+  <p>このマトリクスの最大のポイントは、<b>タスクの位置は固定ではない</b>ということです。</p>
+  <ul>
+    <li><b>右へ動かす</b>：自動テスト・シミュレータ・独立検証エージェントを整備すれば、同じタスクでも「検証しやすい」側へ移る（③の原則）</li>
+    <li><b>下へ動かす</b>：モジュール境界を明確にし、変更の影響が他へ波及しないようにすれば、リスクが下がる（アーキテクチャ上の隔離）</li>
+  </ul>
+  <p>つまり委任範囲は「来期からAIに任せる」と宣言して広がるものではなく、<b>検証の自動化と影響範囲の隔離というエンジニアリングの成果として広がる</b>ものです。</p>
+
+  <h3>信頼は「実績データ」で稼ぐ</h3>
+  <p>新人に仕事を任せるとき、最初は小さな仕事を任せて結果を見て、うまくいけば範囲を広げます。AIへの委任も同じで、感覚ではなく数字で判断できるようにします。</p>
+  <div class="grid">
+    <div class="card"><h4>計測する指標</h4><p>・修正なしでの承認率<br>・差し戻し回数／PR<br>・人間の介入時間／PR<br>・リリース後に見つかった不具合（流出）<br>・検証エージェントの指摘の的中率</p></div>
+    <div class="card"><h4>昇格ルールの例</h4><p>ある領域で直近20件が修正なしで承認され、流出不具合がゼロなら、その領域の自律レベルを1段上げる。</p></div>
+    <div class="card"><h4>降格ルールの例</h4><p>流出不具合が1件出たら1段下げる。ただし責めるのではなく、「どのハーネスが欠けていたか」を分析して改善する（②の原則）。</p></div>
+  </div>
+  <p style="font-size:14px;color:var(--muted)">※ 数値は説明用の例です。実際の閾値は、領域のリスクと既存の品質水準に合わせて決めます。</p>
+
+  <h3>委任の「単位」を設計する：AIへの発注書としてのIssue</h3>
+  <p>委任がうまくいくかどうかは、渡す仕事の切り出し方で大きく変わります。曖昧で大きすぎるIssueはAIが意図と違う大きな差分を作り、レビュアーの時間を浪費し、却下が続くとAIへの信頼そのものが下がる、という研究報告もあります。「AI向けに良いIssue」には次の要素が揃っています。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>要素</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td>背景と目的</td><td>なぜこの変更が必要か。顧客・業務上の文脈</td></tr>
+      <tr><td>受入基準</td><td>EARS形式など、そのままテストになる書き方</td></tr>
+      <tr><td>範囲と禁止事項</td><td>触ってよい範囲、触ってはいけない箇所・互換性の制約</td></tr>
+      <tr><td>参照先</td><td>参考にすべき既存コード・類似実装・関連する過去の障害</td></tr>
+      <tr><td>検証方法</td><td>どのテスト・どの環境（シミュレータ等）で確かめるか</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>人の役割はどう変わるか</h3>
+  <p>エンジニアの役割は「実装者」から、仕事を分解し、エージェントに割り当て、結果を評価する<b>「オーケストレーター」</b>へ移ります。興味深いのは、Anthropicが約40万件のClaude Codeセッションを分析した研究で、<b>成功を左右するのはコーディングの訓練よりも「解こうとしている問題をどれだけ理解しているか」</b>だったという結論が出ていることです。行き詰まったセッションを途中で投げ出す割合も、経験者のほうが大幅に低かったと報告されています。つまり、ドメイン知識と問題理解の深いベテランほど、AIへの委任で大きな成果を出せる可能性があります。</p>
+  <p>ロールモデルの観点では、「何を作るか」を仕様に落とす役割、ハーネスと検証を設計して委任範囲を広げる役割、エージェントを使いこなして実装を回す役割、というように、<b>委任の各段階に対応した役割</b>として定義し直すと、キャリアパスとも接続しやすくなります。</p>
+
+  <div class="callout key"><div class="ttl">コアとなる考え方（一文で）</div>
+    AIへの委任は「任せる／任せない」の二択ではなく、<b>仕事の種類ごとに設定する自律レベル</b>である。そのレベルは、検証の自動化と影響の隔離によって上げられ、実績データによって正当化される。</div>
+</section>
+
+<!-- ============ 5. SELF-HEAL ============ -->
+<section id="selfheal" class="s5">
+  <div class="sec-head"><div class="num">5</div>
+    <h2>保守は「自己修復ループ」として設計する<small>検知 → 根本原因 → 修正PR → CI再試行 → 人が承認</small></h2></div>
+
+  <div class="summary"><b class="lbl">3行まとめ</b><ul>
+    <li>従来の保守で時間を食っているのは「修正作業」ではなく、部門間の引き継ぎと「待ち」。自己修復ループの最大の価値は、この待ちを消すこと。</li>
+    <li>ループの要は<b>「直す前に、失敗する再現テストを書く」</b>こと。それが原因の確証と修正の検証を同時に与える。</li>
+    <li>ループの質を決めるのはモデルではなく「シグナル（証拠）」。オンプレ製品では、顧客環境から良い証拠を集める仕組みが最重要の投資になる。</li>
+  </ul></div>
+
+  <h3>基本：従来の保守フローは「待ち」でできている</h3>
+  <p>市場から障害報告が上がってから修正版を届けるまでの流れを、時間軸で並べてみます。</p>
+  <figure>
+    <svg viewBox="0 0 900 230" role="img" aria-label="従来の保守フローの時間構成">
+      <path d="M500,52 V46 H640 V52" style="fill:none;stroke:var(--c2);stroke-width:1.6"/>
+      <text class="ts k2 tb m" x="570" y="38">実作業</text>
+      <rect class="b"  x="20"  y="60" width="60"  height="44"/><text class="ts m" x="50" y="87" style="fill:var(--ink)">顧客報告</text>
+      <rect class="b"  x="80"  y="60" width="70"  height="44"/><text class="ts m" x="115" y="87" style="fill:var(--ink)">一次受付</text>
+      <rect x="150" y="60" width="150" height="44" style="fill:url(#hatch);stroke:var(--line)"/>
+      <rect class="b"  x="300" y="60" width="70"  height="44"/><text class="ts m" x="335" y="87" style="fill:var(--ink)">エスカレ</text>
+      <rect x="370" y="60" width="130" height="44" style="fill:url(#hatch);stroke:var(--line)"/>
+      <rect class="f2" x="500" y="60" width="90"  height="44"/><text class="ts m" x="545" y="87" style="fill:var(--ink)">調査</text>
+      <rect class="f2" x="590" y="60" width="50"  height="44"/><text class="ts m" x="615" y="87" style="fill:var(--ink)">修正</text>
+      <rect class="b"  x="640" y="60" width="80"  height="44"/><text class="ts m" x="680" y="87" style="fill:var(--ink)">テスト</text>
+      <rect x="720" y="60" width="110" height="44" style="fill:url(#hatch);stroke:var(--line)"/>
+      <text class="ts k5 m" x="225" y="126">待ち：情報追加の往復</text>
+      <text class="ts k5 m" x="435" y="126">待ち：再現環境の準備</text>
+      <text class="ts k5 m" x="775" y="126">待ち：リリース調整</text>
+      <text class="ts m" x="450" y="178">修正そのもの（緑）は全体のごく一部。時間の大半は「待ち」と「引き継ぎ」が占める。</text>
+      <text class="t tb k2 m" x="450" y="206">→ 自己修復ループの最大の価値は、待ちと引き継ぎを消すことにある</text>
+    </svg>
+    <figcaption>図5-1：従来の保守フローの時間構成（イメージ）。ログが足りずに顧客へ追加情報を依頼する往復、再現環境の準備待ちが大きな比重を占める。</figcaption>
+  </figure>
+  <p>自己修復ループは、この一連の工程を<b>エージェントが連続して実行する1本のループ</b>に組み替えます。人間が関わるのは、ループの中の「承認」という1点と、ループが自力で解けなかった場合の例外処理だけです。</p>
+
+  <h3>自己修復ループの全体像</h3>
+  <figure>
+    <svg viewBox="0 0 900 545" role="img" aria-label="自己修復ループ">
+      <ellipse class="track" cx="450" cy="260" rx="260" ry="200"/>
+      <polygon class="tri" points="0,-6 12,0 0,6" transform="translate(539,72) rotate(15.6)"/>
+      <polygon class="tri" points="0,-6 12,0 0,6" transform="translate(675,160) rotate(53.1)"/>
+      <polygon class="tri" points="0,-6 12,0 0,6" transform="translate(706,295) rotate(102.9)"/>
+      <polygon class="tri" points="0,-6 12,0 0,6" transform="translate(617,413) rotate(147.1)"/>
+      <polygon class="tri" points="0,-6 12,0 0,6" transform="translate(450,460) rotate(180)"/>
+      <polygon class="tri" points="0,-6 12,0 0,6" transform="translate(283,413) rotate(212.9)"/>
+      <polygon class="tri" points="0,-6 12,0 0,6" transform="translate(194,295) rotate(257.1)"/>
+      <polygon class="tri" points="0,-6 12,0 0,6" transform="translate(225,160) rotate(306.9)"/>
+      <polygon class="tri" points="0,-6 12,0 0,6" transform="translate(361,72) rotate(344.4)"/>
+
+      <text class="t tb m k5" x="450" y="240">シグナル（証拠）</text>
+      <text class="ts m" x="450" y="262">＝ ループの燃料</text>
+      <text class="ts m" x="450" y="290">例外・ログ・トレース・</text>
+      <text class="ts m" x="450" y="308">顧客報告・診断データ</text>
+
+      <rect class="f5" x="375" y="37" width="150" height="46" rx="8"/>
+      <text class="t tb m" x="450" y="57">① 検知</text><text class="ts tx m" x="450" y="74">例外・ログ・顧客報告</text>
+      <rect class="b" x="542" y="84" width="150" height="46" rx="8"/>
+      <text class="t tb m" x="617" y="104">② トリアージ</text><text class="ts tx m" x="617" y="121">重複判定・重大度判定</text>
+      <rect class="b" x="631" y="202" width="150" height="46" rx="8"/>
+      <text class="t tb m" x="706" y="222">③ 根本原因分析</text><text class="ts tx m" x="706" y="239">仮説を証拠で検証</text>
+      <rect class="f2" x="600" y="337" width="150" height="46" rx="8"/>
+      <text class="t tb m" x="675" y="357">④ 再現テスト</text><text class="ts tx m" x="675" y="374">失敗するテストを先に</text>
+      <rect class="b" x="464" y="425" width="150" height="46" rx="8"/>
+      <text class="t tb m" x="539" y="445">⑤ 修正PR</text><text class="ts tx m" x="539" y="462">最小差分の修正</text>
+      <rect class="f3" x="286" y="425" width="150" height="46" rx="8"/>
+      <text class="t tb m" x="361" y="445">⑥ CI・独立検証</text><text class="ts tx m" x="361" y="462">同じ証拠で修正を確認</text>
+      <rect class="f4" x="150" y="337" width="150" height="46" rx="8" style="stroke-width:2.5"/>
+      <text class="t tb m" x="225" y="357">⑦ 人間が承認</text><text class="ts tx m" x="225" y="374">意図とリスクの確認</text>
+      <rect class="b" x="119" y="202" width="150" height="46" rx="8"/>
+      <text class="t tb m" x="194" y="222">⑧ リリース・確認</text><text class="ts tx m" x="194" y="239">再発しないか観測</text>
+      <rect class="f2" x="208" y="84" width="150" height="46" rx="8"/>
+      <text class="t tb m" x="283" y="104">⑨ 学習</text><text class="ts tx m" x="283" y="121">回帰テスト・知見・環境改善</text>
+
+      <path class="a a3" d="M361,471 C361,512 539,512 539,474"/>
+      <text class="ts k3 tb m" x="450" y="530">CI失敗 → 再試行（回数上限つき。超えたら調査メモ付きで人へ）</text>
+    </svg>
+    <figcaption>図5-2：自己修復ループ。人間が必ず関わるのは⑦の承認だけ。ループ全体の質は中央の「シグナル」の質で決まる。</figcaption>
+  </figure>
+
+  <h3>各ステップの要点</h3>
+  <div class="grid">
+    <div class="card"><h4>① 検知</h4><p>例外・エラーログ・性能劣化・顧客からの報告を入口とする。問い合わせチケットも、立派な検知シグナル。</p></div>
+    <div class="card"><h4>② トリアージ</h4><p>既知の問題との重複判定、影響顧客数と重大度の判定。既知なら既存の回答・回避策を返して終わる。ここで多くの件数が片付く。</p></div>
+    <div class="card"><h4>③ 根本原因分析</h4><p>コード・ログ・変更履歴・過去の障害事例を突き合わせ、複数の仮説を立て、証拠で1つずつ棄却していく。「それっぽい原因」で止まらないことが肝心。</p></div>
+    <div class="card"><h4>④ 再現テスト（最重要）</h4><p>修正の前に、<b>障害を再現して失敗するテスト</b>を書く。これが書けた時点で、原因の確証と、修正が効いたかを判定する手段が同時に手に入る。</p></div>
+    <div class="card"><h4>⑤ 修正PR</h4><p>最小の差分で修正し、④のテストが通ることを確認。PRには原因の説明、修正の根拠、影響範囲を添える。</p></div>
+    <div class="card"><h4>⑥ CI・独立検証</h4><p>全テストに加え、別の検証エージェントが「根本原因に対処しているか（対症療法でないか）」「元の証拠に照らして直っているか」を判定。失敗すれば⑤に戻る。</p></div>
+    <div class="card"><h4>⑦ 人間が承認</h4><p>検証エージェントの判定と要注意点を見て承認する。低リスク領域では、実績に応じてこのゲートを簡略化していく（④の原則）。</p></div>
+    <div class="card"><h4>⑧ リリース・効果確認</h4><p>修正版の適用後、同じシグナルが再発していないかを観測して、ループを閉じる。「出して終わり」にしない。</p></div>
+    <div class="card"><h4>⑨ 学習</h4><p>再現テストを回帰テストに追加。原因と対処をナレッジ化。同種の障害を事前に防ぐlintやテストをハーネスに追加する（②の原則）。</p></div>
+  </div>
+
+  <h3>ループを健全に保つ4つの設計ポイント</h3>
+  <div class="diff"><div class="dh"><span class="tag">1</span><strong>「再現が先、修正は後」を必須にする</strong></div>
+    <p>AIに「このエラーを直して」とだけ頼むと、エラーが出なくなるような変更、たとえば例外を握りつぶす、nullチェックを足して処理を飛ばす、といった<b>対症療法</b>をしがちです。再現テストを先に書かせることで、「何が起きていて、何が正しい挙動か」が明文化され、対症療法を検出できるようになります。</p></div>
+  <div class="diff"><div class="dh"><span class="tag">2</span><strong>修正は「障害を見つけたのと同じ証拠」で確かめる</strong></div>
+    <p>Rampが社内エージェントで取り入れたのがこの考え方で、提案された修正を実際の運用データに照らして確認します。障害を見つけた証拠（ログ・トレース・再現手順）が、そのまま修正の正しさを確かめる証拠になる、という閉じた構造にします。</p></div>
+  <div class="diff"><div class="dh"><span class="tag">3</span><strong>再試行には上限を設け、失敗も資産にする</strong></div>
+    <p>CIが落ちたら修正し直す、というループは放っておくと無限に回り、コストだけがかさみます。回数（例：3回）・時間・費用に上限を設け、超えたら<b>そこまでの調査結果（仮説、棄却した原因、再現状況）を添えて人間に渡す</b>。自力で解けなかった場合でも、人間は調査の途中から始められるので、ループは無駄になりません。</p></div>
+  <div class="diff"><div class="dh"><span class="tag">4</span><strong>自律度はダイヤルとして段階的に上げる</strong></div>
+    <p>Sentryの説明によれば、同じ仕組みでも、すべてのPRを人が確認するチームもあれば、夜間にAIにトリアージさせて朝に結果をまとめて確認するチームもあります。自律度は導入の段階に応じて調整できる「ダイヤル」です。</p>
+    <div class="tbl" style="margin-top:10px"><table>
+      <thead><tr><th>段階</th><th>AIがすること</th><th>人がすること</th></tr></thead>
+      <tbody>
+        <tr><td>1. 分析のみ</td><td>原因分析と修正方針の提案</td><td>修正の実装とレビュー</td></tr>
+        <tr><td>2. ドラフトPR</td><td>再現テスト＋修正PRの作成</td><td>全PRをレビュー</td></tr>
+        <tr><td>3. 夜間バッチ</td><td>夜間に全件トリアージ・PR作成・検証</td><td>朝に判定結果と要注意点を確認して承認</td></tr>
+        <tr><td>4. 限定自動マージ</td><td>低リスクと認定された種類は自動でマージ</td><td>例外と高リスク案件のみ判断</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <h3>ループの3つの構成要素：差がつくのは「シグナル」</h3>
+  <p>Sentryの取り組みを解説した記事では、自己修復ループを構成する部品を3つに分けています。どこから調達するかで考えると、力を入れるべき場所がはっきりします。</p>
+  <div class="grid">
+    <div class="card"><h4>エージェント（モデル）</h4><p>推論を担う部分。ほぼすべての企業がAI研究所から「借りる」もの。差がつきにくい。</p></div>
+    <div class="card"><h4>ハーネス</h4><p>エージェントが動く足場（開発環境・CI・サンドボックス）。作ることも買うこともでき、それ自体は決定的な差別化要因ではない。</p></div>
+    <div class="card" style="border:2px solid var(--c5)"><h4>シグナル（証拠）</h4><p>障害の証拠となるデータ。<b>ここが最も差がつく</b>。どれだけ賢いモデルでも、証拠がなければ推測でしか直せない。</p></div>
+  </div>
+  <p>この構図は、<b>オンプレミス製品にとって最も厳しいポイント</b>を示しています。クラウドサービスなら本番のエラーやトレースが自動で集まりますが、オンプレミスでは顧客環境のデータは自然には手元に届きません。顧客に追加ログを依頼する往復（図5-1の最初の「待ち」）が発生するのはこのためです。したがって、オンプレミス製品で自己修復ループを回すための最初の投資は、次のようなシグナル収集の仕組みになります。</p>
+  <ul>
+    <li><b>診断バンドル</b>：ログ・設定・バージョン・環境情報を、顧客が1操作で収集・送付できる仕組み</li>
+    <li><b>構造化ログとエラーID</b>：エラーごとに一意のIDを持たせ、AIが既知の問題と機械的に照合できるようにする</li>
+    <li><b>オプトインのテレメトリ</b>：顧客の同意のもとで、エラー発生状況を定期的に送信する仕組み（ハイブリッド構成化と相性が良い）</li>
+  </ul>
+
+  <h3>問い合わせ対応も、同じループの入口になる</h3>
+  <p>問い合わせは「障害の手前」にあるシグナルです。トリアージを「担当に振り分ける作業」ではなく<b>「解決できる最初の機会」</b>として設計するのが2026年の考え方です。AIが問い合わせを受けると、製品マニュアル・ナレッジ・既知の不具合一覧・さらにはソースコードそのものを横断して調べ、回答案を作ります。既知の不具合に該当すれば状況と回避策を案内し、新しい不具合の疑いがあれば、調査結果を添えてループの①に投入します。人間は回答案を確認して送るだけです。</p>
+  <p>Ciscoのサポート基盤では、単一の巨大なAIアシスタントでは業務が複雑になるにつれて正確さや説明可能性を保てなかったため、<b>役割ごとに専門化したエージェントを協調させ、必要なときに人間へきれいに引き継ぐ</b>構成に切り替えたと報告しています。問い合わせ対応でも「受付・既知問題照合・設定診断・不具合調査」のように専門エージェントに分けるのが有効です。</p>
+
+  <h3>オンプレミス製品に固有の課題：複数バージョンへの修正展開</h3>
+  <p>オンプレミス製品では、市場に複数のバージョンが同時に稼働しています。ある障害を最新版で直しても、それを顧客が使っている各バージョンに移植（バックポート）し、それぞれで検証する必要があります。この作業は「機械的だが注意深さが要る」典型であり、AIが得意とする領域でもあります。</p>
+  <figure>
+    <svg viewBox="0 0 880 290" role="img" aria-label="複数バージョンへのバックポート">
+      <text class="t tb" x="20" y="55">main（開発版）</text>
+      <text class="t" x="20" y="115">v10系</text>
+      <text class="t" x="20" y="175">v9系</text>
+      <text class="t" x="20" y="235">v8系</text>
+      <line x1="140" y1="50" x2="780" y2="50" style="stroke:var(--ink2);stroke-width:3"/>
+      <path d="M320,50 Q340,110 380,110 H780" style="fill:none;stroke:var(--c1);stroke-width:3"/>
+      <path d="M240,50 Q260,170 300,170 H780" style="fill:none;stroke:var(--c1);stroke-width:3;stroke-opacity:.7"/>
+      <path d="M170,50 Q190,230 230,230 H780" style="fill:none;stroke:var(--c1);stroke-width:3;stroke-opacity:.45"/>
+      <circle cx="540" cy="50" r="9" style="fill:var(--c5)"/>
+      <text class="ts k5 tb m" x="540" y="32">修正（まずmainで）</text>
+      <path class="a a2 dsh" d="M548,56 Q590,85 612,104"/>
+      <path class="a a2 dsh" d="M546,58 Q620,130 672,164"/>
+      <path class="a a2 dsh" d="M544,59 Q650,170 732,224"/>
+      <circle cx="620" cy="110" r="8" style="fill:var(--c2)"/>
+      <circle cx="680" cy="170" r="8" style="fill:var(--c2)"/>
+      <circle cx="740" cy="230" r="8" style="fill:var(--c3)"/>
+      <text class="ts k3 tb e" x="728" y="258">コード差異あり → 調整して移植</text>
+      <text class="ts" x="795" y="115">顧客A・B</text>
+      <text class="ts" x="795" y="175">顧客C</text>
+      <text class="ts" x="795" y="235">顧客D・E</text>
+      <text class="ts m" x="440" y="283">AIが各バージョンのコード差異を解析して移植し、バージョンごとに再現テストと回帰テストを実行する</text>
+    </svg>
+    <figcaption>図5-3：オンプレミス製品のバックポート。再現テスト（ループの④）があれば、各バージョンで「直ったか」を機械的に確認できる。</figcaption>
+  </figure>
+
+  <h3>ガードレール（してはいけないこと）</h3>
+  <div class="grid">
+    <div class="card"><h4>本番・顧客環境への直接操作</h4><p>エージェントに顧客環境や出荷物への書き込み権限は与えない。出荷は必ず人間の承認とリリース手順を経由する。</p></div>
+    <div class="card"><h4>顧客データの取り扱い</h4><p>診断データに含まれる個人情報・印刷ログの内容は、AIに渡す前にマスキングする。ソースコードの外部送信ポリシーと合わせて実行環境を決める。</p></div>
+    <div class="card"><h4>無制限の再試行</h4><p>回数・時間・費用の上限を必ず設ける。超えたら調査メモ付きで人にエスカレーション。</p></div>
+    <div class="card"><h4>テストの書き換えによる「解決」</h4><p>既存テストの削除・弱体化を含む修正は、自動的に人間レビュー必須にする。</p></div>
+  </div>
+
+  <div class="callout key"><div class="ttl">コアとなる考え方（一文で）</div>
+    保守をAI中心にするとは、個々の作業をAIに置き換えることではなく、<b>「証拠 → 再現 → 修正 → 同じ証拠での確認 → 学習」が途切れずに回るループを設計すること</b>である。人間はそのループの「承認」と「例外」だけを担い、ループが回るたびにハーネスとナレッジが強くなる。</div>
+  <p>なお、Sentry自身もこの自己修復を目指す姿として掲げつつ、<b>全工程を無人で回せる製品はまだ市場に存在しない</b>と認めています。「人間の承認を残したループ」は妥協ではなく、2026年時点での最先端の現実的な姿です。</p>
+</section>
+
+<!-- ============ CONNECT ============ -->
+<section id="connect" class="s0">
+  <div class="sec-head"><div class="num" style="font-size:18px">∑</div>
+    <h2>5つの原則のつながり<small>それぞれが、ほかの原則の前提になっている</small></h2></div>
+  <div class="tbl"><table>
+    <thead><tr><th>原則</th><th>答える問い</th><th>人間の役割</th><th>主な成果物</th></tr></thead>
+    <tbody>
+      <tr><td><b style="color:var(--c1)">① スペック駆動</b></td><td>何を・なぜ作るか</td><td>意図を仕様にし、承認する</td><td>仕様・受入基準・恒常ルール</td></tr>
+      <tr><td><b style="color:var(--c2)">② ハーネス</b></td><td>AIがどこで・どう働くか</td><td>環境を設計し、失敗から改善する</td><td>規約・ツール・lint・テスト基盤</td></tr>
+      <tr><td><b style="color:var(--c3)">③ 検証</b></td><td>それは正しいか</td><td>意図とリスクだけを判断する</td><td>多層の検証パイプライン</td></tr>
+      <tr><td><b style="color:var(--c4)">④ 段階的委任</b></td><td>どこまで任せるか</td><td>実績データで範囲を調整する</td><td>自律レベルと昇格・降格ルール</td></tr>
+      <tr><td><b style="color:var(--c5)">⑤ 自己修復</b></td><td>市場の問題をどう直し続けるか</td><td>承認と例外対応</td><td>検知〜学習のループ・シグナル基盤</td></tr>
+    </tbody>
+  </table></div>
+  <p>依存関係で見ると、次のような構造になっています。</p>
+  <ul>
+    <li><b>①の受入基準がなければ、③の検証ができない</b>（何を満たせば正解か分からない）</li>
+    <li><b>③の検証が自動化されていなければ、④の委任範囲は広がらない</b>（確かめられないものは任せられない）</li>
+    <li><b>②のハーネスが、①〜③を毎回エージェントに届ける器になる</b>（規約・テスト・ツールを環境として提供）</li>
+    <li><b>⑤は①〜④をリリース後に回し続ける形</b>であり、その学習結果が再び①と②を強くする</li>
+  </ul>
+  <p>前回の提案に照らすと、案C（保守起点）は「⑤と③を先に作り、そこで貯めた再現テストと実績で④の委任範囲を広げる」戦略、案A（漸進型）は「①と②を既存コードに敷いて④を徐々に上げる」戦略、案B（再構築型）は「新しい境界の内側だけ①〜④を最初から最大化する」戦略、と整理できます。</p>
+
+  <div class="callout key" style="--sc:var(--ink2)"><div class="ttl">全体を一文で</div>
+    人間は「何を・なぜ」を<b>仕様</b>で示し、エンジニアはエージェントが正しく働ける<b>環境</b>と、正しさを確かめる<b>仕組み</b>を作り、その検証実績に応じて<b>委任範囲</b>を広げ、リリース後はそのすべてを<b>ループ</b>として回し続ける。</div>
+</section>
+
+<!-- ============ REFS ============ -->
+<section id="refs" class="s0">
+  <h3 style="margin-top:0">参考文献・参考情報</h3>
+  <ol class="refs">
+    <li><a href="https://openai.com/index/harness-engineering/">Harness engineering: leveraging Codex in an agent-first world</a>（OpenAI, 2026年2月）</li>
+    <li><a href="https://www.zenml.io/llmops-database/extreme-harness-engineering-building-production-software-with-zero-human-written-code">Extreme Harness Engineering</a>（ZenML LLMOps Database）</li>
+    <li><a href="https://www.nxcode.io/resources/news/harness-engineering-complete-guide-ai-agent-codex-2026">Harness Engineering Guide</a>（NxCode, 2026年3月）</li>
+    <li><a href="https://thoughtworks.medium.com/spec-driven-development-d85995a81387">Spec-driven development</a>（Thoughtworks）／<a href="https://www.thoughtworks.com/en-us/radar/techniques/spec-driven-development">Technology Radar: Spec-driven development</a></li>
+    <li><a href="https://martinelli.ch/the-three-levels-of-spec-driven-development-and-where-the-ai-unified-process-sits/">The Three Levels of Spec-Driven Development</a>（Simon Martinelli）</li>
+    <li><a href="https://www.truefoundry.com/blog/spec-driven-development-ai-agents">Spec-Driven Development for AI Agents: Governing Specs</a>（TrueFoundry, 2026年6月）</li>
+    <li><a href="https://dev.to/krlz/spec-driven-development-in-2026-what-it-is-the-tooling-and-how-teams-actually-use-it-2fk2">Spec-Driven Development in 2026</a>（DEV Community）</li>
+    <li><a href="https://www.augmentcode.com/guides/what-is-spec-driven-development">What Is Spec-Driven Development?</a>（Augment Code）</li>
+    <li><a href="https://developer.microsoft.com/blog/spec-driven-development-ai-native-engineering/">Spec-Driven Development: A Spec-First Approach to AI-Native Engineering</a>（Microsoft for Developers）</li>
+    <li><a href="https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf">2026 Agentic Coding Trends Report</a>（Anthropic）／<a href="https://pathmode.io/blog/orchestration-era-needs-intent">要約（Pathmode）</a></li>
+    <li><a href="https://www.digitalapplied.com/blog/agentic-coding-domain-expertise-moat-anthropic-research-2026">Domain Expertise Is the New Moat in Agentic Coding</a>（Anthropicの研究の解説）</li>
+    <li><a href="https://arxiv.org/pdf/2606.26300">The Verification Horizon: No Silver Bullet for Coding Agent Rewards</a>（arXiv, 2026）</li>
+    <li><a href="https://arxiv.org/html/2512.21426v1">What Makes a GitHub Issue Ready for Copilot?</a>（arXiv, 2025）</li>
+    <li><a href="https://docs.github.com/copilot/concepts/agents/coding-agent/about-coding-agent">About GitHub Copilot coding agent</a>（GitHub Docs）</li>
+    <li><a href="https://sentry.io/resources/automated-debugging/">Automated Debugging & AI Root Cause Analysis</a>（Sentry）</li>
+    <li><a href="https://theaiengineer.substack.com/p/how-sentry-built-seer">How Sentry's Seer Works, From Root Cause to Autofix</a>（The AI Engineer）</li>
+    <li><a href="https://blogs.cisco.com/cisco-on-cisco/how-cisco-architected-ai-driven-support-and-validated-against-industry-benchmarks">How Cisco architected AI-driven support</a>（Cisco Blogs, 2026年7月）</li>
+    <li><a href="https://www.euronews.com/2026/02/11/cisco-president-warns-ai-agents-need-background-checks-like-human-employees">Cisco president on spec-driven development</a>（Euronews, 2026年2月）</li>
+    <li><a href="https://arxiv.org/abs/2608.28972">Legacy System Modernization with Coding Agents: A Case Study</a>（arXiv, 2026年8月）</li>
+    <li><a href="https://devrev.ai/blog/ai-support-ticket-triaging">AI Support Ticket Triaging</a>（DevRev）</li>
+  </ol>
+</section>
+
+<footer>2026年9月時点の公開情報をもとに作成。数値・製品機能は各社の発表に基づくもので、変化が速い分野のため最新情報は各出典をご確認ください。</footer>
+</div>
+</body>
+</html>

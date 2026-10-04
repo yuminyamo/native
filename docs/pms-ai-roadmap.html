@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PMS AI化ロードマップ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef0f3; --paper:#ffffff; --ink:#1b2330; --ink2:#3a4356; --muted:#6a7386;
+  --line:#d3d8e0; --soft:#e6e9ee; --focus:#2f5d8a;
+  --c1:#2f5d8a; --c2:#23786a; --c3:#b45f25; --c4:#6a4d9e; --c5:#a63b3b;
+  --l0:#e6e9ee; --l1:#cfdbe8; --l2:#a9c2da; --l3:#7ea3c8; --l4:#4f80b0; --l5:#2f5d8a;
+  --ok:#23786a; --warn:#b45f25; --bad:#a63b3b;
+  --code:#f1f3f6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#12161d; --paper:#1a1f28; --ink:#e7e9ee; --ink2:#c2c7d1; --muted:#98a0ad;
+    --line:#333b48; --soft:#232935; --focus:#80aad8;
+    --c1:#80aad8; --c2:#5ebfae; --c3:#e59a63; --c4:#a98ddb; --c5:#e07b7b;
+    --l0:#232935; --l1:#2c3b4d; --l2:#345170; --l3:#3f6a94; --l4:#5486b5; --l5:#80aad8;
+    --ok:#5ebfae; --warn:#e59a63; --bad:#e07b7b;
+    --code:#20252f;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#12161d; --paper:#1a1f28; --ink:#e7e9ee; --ink2:#c2c7d1; --muted:#98a0ad;
+  --line:#333b48; --soft:#232935; --focus:#80aad8;
+  --c1:#80aad8; --c2:#5ebfae; --c3:#e59a63; --c4:#a98ddb; --c5:#e07b7b;
+  --l0:#232935; --l1:#2c3b4d; --l2:#345170; --l3:#3f6a94; --l4:#5486b5; --l5:#80aad8;
+  --ok:#5ebfae; --warn:#e59a63; --bad:#e07b7b;
+  --code:#20252f;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Noto Sans JP","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;
+  font-size:15.5px;line-height:1.85;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding-block:0 80px;padding-inline:20px}
+h1,h2,h3{font-family:"Zen Kaku Gothic New","Noto Sans JP",sans-serif;text-wrap:balance}
+/* group colors: 群1=teal, 群2=blue, 群3=orange, 共通基盤=purple */
+.g1{--gc:var(--c2)} .g2{--gc:var(--c1)} .g3{--gc:var(--c3)} .g0{--gc:var(--c4)}
+.gk{color:var(--gc)}
+
+header.hero{padding:48px 0 28px;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:12.5px;letter-spacing:.12em;color:var(--muted);font-weight:500}
+h1{font-size:34px;line-height:1.4;margin:10px 0 6px;font-weight:900}
+.sub{font-family:"Zen Kaku Gothic New",sans-serif;font-size:17px;color:var(--ink2);font-weight:700;margin:0 0 18px}
+.rule{background:var(--paper);border:2px solid var(--ink);border-radius:14px;padding:18px 22px;display:grid;gap:10px;max-width:820px}
+.rule .r{display:grid;grid-template-columns:78px 1fr;gap:12px;align-items:baseline}
+.rule .r b.k{font-size:12px;letter-spacing:.08em;color:var(--muted)}
+.rule .r span{font-family:"Zen Kaku Gothic New",sans-serif;font-size:19px;font-weight:700;line-height:1.55}
+.rule .r.s span{font-size:16px;font-weight:500;color:var(--ink2)}
+.lead{color:var(--ink2);max-width:780px;margin:16px 0 0}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);margin-top:12px}
+
+.path{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:22px 0 0}
+.path a{display:block;text-decoration:none;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.path a:hover,.path a:focus-visible{border-color:var(--focus);outline:none}
+.path a b{display:block;font-size:12px;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.path a span{font-size:14px}
+.path a.detail{background:transparent;border-style:dashed}
+
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:9px 0;margin:0;
+  display:flex;flex-wrap:wrap;gap:6px;align-items:center;border-bottom:1px solid var(--line)}
+nav.toc a{font-size:12.5px;text-decoration:none;color:var(--ink);background:var(--paper);border:1px solid var(--line);
+  padding:3px 10px;border-radius:999px;white-space:nowrap}
+nav.toc a.d{background:transparent;border-style:dashed}
+nav.toc a:hover,nav.toc a:focus-visible{border-color:var(--focus);outline:none}
+nav.toc .sep{font-size:11.5px;color:var(--muted);margin:0 2px 0 6px;letter-spacing:.06em}
+
+section{margin:54px 0 0;scroll-margin-top:64px}
+.sec-head{display:flex;gap:14px;align-items:flex-start;margin-bottom:8px}
+.num{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-weight:900;font-size:19px;
+  color:var(--paper);background:var(--ink2);font-family:"Zen Kaku Gothic New",sans-serif}
+.detail-sec .num{background:transparent;color:var(--ink2);border:2px dashed var(--ink2)}
+h2{font-size:25px;line-height:1.4;margin:2px 0 0;font-weight:700}
+h2 small{display:block;font-size:13.5px;color:var(--muted);font-weight:500;margin-top:2px;font-family:"Noto Sans JP",sans-serif}
+h3{font-size:18px;margin:32px 0 8px;padding-left:12px;border-left:4px solid var(--ink2);font-weight:700}
+h4{font-size:15.5px;margin:16px 0 4px}
+p{margin:10px 0}
+.divider{margin:72px 0 0;padding:18px 0;border-top:2px dashed var(--line);display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.divider b{font-family:"Zen Kaku Gothic New",sans-serif;font-size:21px}
+.divider span{color:var(--muted);font-size:14px}
+
+.summary{background:var(--paper);border:1px solid var(--line);border-top:4px solid var(--ink2);border-radius:10px;padding:13px 18px;margin:14px 0}
+.summary b.lbl{display:block;font-size:12px;letter-spacing:.1em;color:var(--muted);margin-bottom:2px}
+.summary ul{margin:4px 0;padding-left:20px}
+.callout{background:var(--soft);border-radius:10px;padding:13px 18px;margin:16px 0}
+.callout.key{background:transparent;border:2px solid var(--ink2)}
+.callout .ttl{font-weight:700;margin-bottom:4px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin:14px 0}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:13px 15px}
+.card h4{margin:0 0 6px;font-size:15px}
+.card p{margin:4px 0;font-size:14px;color:var(--ink2)}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;color:var(--paper);background:var(--gc, var(--ink2));border-radius:6px;padding:0 8px;line-height:1.75;vertical-align:1px;white-space:nowrap}
+.pill{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:0 8px;color:var(--muted);line-height:1.7}
+
+/* group cards */
+.groups{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));margin:16px 0}
+.gcard{background:var(--paper);border:1px solid var(--line);border-top:5px solid var(--gc);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.gcard .gh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.gcard .gh strong{font-family:"Zen Kaku Gothic New",sans-serif;font-size:18px;color:var(--gc)}
+.gcard .gh .pill{font-variant-numeric:tabular-nums}
+.gcard dl{margin:0;display:grid;grid-template-columns:90px 1fr;gap:4px 10px;font-size:13.5px}
+.gcard dt{color:var(--muted);font-weight:700;font-size:12.5px}
+.gcard dd{margin:0;color:var(--ink2)}
+.gcard ul.tasks{list-style:none;margin:4px 0 0;padding:8px 0 0;border-top:1px solid var(--line);display:grid;gap:5px}
+.gcard ul.tasks li{display:grid;grid-template-columns:40px 1fr 44px;gap:8px;align-items:center;font-size:14px}
+.gcard ul.tasks .w{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--muted);text-align:right}
+.gcard .when{font-size:12.5px;color:var(--muted)}
+
+figure{margin:18px 0;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 12px 8px}
+.figscroll{overflow-x:auto}
+.figscroll svg{min-width:640px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-size:13px;color:var(--muted);margin-top:8px;padding:0 4px}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 11px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:700;white-space:nowrap;font-size:13px}
+tr:last-child td{border-bottom:none}
+td.c,th.c{text-align:center}
+tr.gh td{background:var(--soft);font-weight:700;color:var(--gc);font-size:13px;padding:5px 11px;border-left:4px solid var(--gc)}
+.lv{display:inline-grid;place-items:center;min-width:38px;height:25px;border-radius:6px;font-weight:700;font-size:12.5px;color:var(--ink)}
+.lv.L0{background:var(--l0);box-shadow:inset 0 0 0 1px var(--line)} .lv.L1{background:var(--l1)} .lv.L2{background:var(--l2)}
+.lv.L3{background:var(--l3);color:#fff} .lv.L4{background:var(--l4);color:var(--paper)} .lv.L5{background:var(--l5);color:var(--paper)}
+.lv.over{outline:2px dashed var(--bad);outline-offset:1px}
+.lvc{cursor:pointer;user-select:none}
+.lvc:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.cap{display:inline-grid;place-items:center;min-width:38px;height:25px;border-radius:6px;font-weight:700;font-size:12.5px;border:1.5px solid var(--ink2);color:var(--ink2)}
+input[type=number]{font:inherit;font-size:13.5px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:3px 6px;width:60px}
+input:focus-visible,button:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+button.btn{font:inherit;font-size:13px;font-weight:700;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:5px 12px;cursor:pointer}
+button.btn:hover{border-color:var(--focus)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0;font-size:13px;color:var(--muted)}
+.weights{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:10px 0}
+.weights label{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--ink2);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.weights input[type=range]{width:100%}
+.rank{display:grid;gap:6px;margin:12px 0}
+.rank .row{display:grid;grid-template-columns:24px 1fr 44px;gap:8px;align-items:center;font-size:14px}
+.rank .track{background:var(--soft);border-radius:4px;height:22px;position:relative;overflow:hidden}
+.rank .bar{height:100%;border-radius:4px;background:var(--gc);opacity:.3}
+.rank .lab{position:absolute;left:8px;top:0;line-height:22px;font-size:12.5px;white-space:nowrap;color:var(--ink)}
+.rank .sc{font-family:"JetBrains Mono",monospace;font-size:13px;text-align:right;color:var(--muted)}
+textarea{width:100%;font-family:"JetBrains Mono",monospace;font-size:12px;background:var(--code);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;min-height:90px}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.vs div{border-radius:8px;padding:9px 13px;font-size:14px;background:var(--paper);border:1px solid var(--line)}
+.vs .h{font-size:12px;font-weight:700;color:var(--muted);display:block}
+ol.steps{padding-left:22px;margin:8px 0} ol.steps li{margin:8px 0}
+.qgrid th.q{text-align:center;min-width:58px}
+.qgrid td.q{text-align:center;padding:5px 4px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);align-items:center}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:4px;border:1px solid var(--line)}
+.stream td{font-size:12.5px;min-width:128px}
+.stream td:first-child{min-width:150px}
+.stream td.empty{color:var(--muted)}
+.qa td:first-child{font-weight:700;white-space:nowrap}
+footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.refs{font-size:13.5px} .refs a{color:var(--c1)}
+svg text{font-family:inherit}
+.t{fill:var(--ink);font-size:13px} .tb{font-weight:700} .ts{fill:var(--muted);font-size:11.5px} .m{text-anchor:middle} .e{text-anchor:end}
+.axis{fill:none;stroke:var(--ink2);stroke-width:1.3} .gridl{stroke:var(--line);stroke-width:1}
+.a{fill:none;stroke:var(--ink2);stroke-width:1.6;marker-end:url(#ah)}
+.dsh{stroke-dasharray:5 4}
+.mk{fill:var(--ink2)}
+@media (max-width:640px){
+  h1{font-size:26px} h2{font-size:20px} .vs{grid-template-columns:1fr} .num{width:38px;height:38px;font-size:16px}
+  .rule .r{grid-template-columns:1fr;gap:0} .rule .r span{font-size:17px}
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="mk"/></marker>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">PMS 開発・保守のAI化率を段階的に高める ── 2026年Q4〜2028年Q3（8四半期）</div>
+  <h1>確かめられる範囲が、<br>任せられる範囲</h1>
+  <p class="sub">PMS AI化ロードマップ（議論用たたき台）</p>
+  <div class="rule" role="note" aria-label="この計画の判断基準">
+    <div class="r"><b class="k">判断基準</b><span>AIの成果物を確かめる手段を用意できた仕事から、AIに任せる。確かめる手段を増やすほど、任せる範囲が広がる。</span></div>
+    <div class="r s"><b class="k">上限</b><span>どこまで任せるかは、間違えたときの影響の大きさに合わせて決める。</span></div>
+  </div>
+  <p class="lead">この資料は、上の判断基準からすべての判断を導きます。第1章で基準の根拠を5つの原則から説明し、第2章で業務を「確かめる手段」によって3つの群に分けます。確かめる手段を作った順に群を任せていく、というのが計画の骨格です。</p>
+  <div class="meta"><span>作成：2026-09-27（改訂3）</span><span>前提：外部LLMへのコード送信可／Git＋Jenkins（ナイトリービルド、判定は手動）／自動テストなし（E2Eは別プロジェクトで整備中）</span></div>
+
+  <div class="path" aria-label="読み進め方">
+    <a href="#rule"><b>基本編 1</b><span>判断基準の根拠と、4つの問いへの答え</span></a>
+    <a href="#groups"><b>基本編 2</b><span>業務を「確かめる手段」で3つに分ける</span></a>
+    <a href="#plan"><b>基本編 3〜5</b><span>進め方・最初の四半期・決めること</span></a>
+    <a href="#assess" class="detail"><b>詳細編 6〜10</b><span>現状評価・四半期目標・活動・5原則・指標</span></a>
+  </div>
+</header>
+
+<nav class="toc" aria-label="目次">
+  <span class="sep">基本編</span>
+  <a href="#rule">1 基準と根拠</a><a href="#groups">2 3つの群</a><a href="#plan">3 進め方</a><a href="#first">4 最初の四半期</a><a href="#decide">5 決めること</a>
+  <span class="sep">詳細編</span>
+  <a class="d" href="#assess">6 現状評価</a><a class="d" href="#targets">7 四半期目標</a><a class="d" href="#streams">8 活動</a><a class="d" href="#principles">9 5原則</a><a class="d" href="#metrics">10 指標・リスク</a>
+</nav>
+
+<!-- ================= 基本編 ================= -->
+
+<section id="rule">
+  <div class="sec-head"><div class="num">1</div>
+    <h2>判断基準とその根拠<small>5つの原則は、どれも「確かめる手段」を軸に回っている</small></h2></div>
+
+  <p>判断基準は、プロジェクト資料「AI中心開発の5つの原則」から導いたものです。まず5つの原則の全体像を振り返ります。</p>
+
+  <figure>
+    <div class="figscroll">
+    <svg viewBox="0 0 900 300" role="img" aria-label="5つの原則の全体像と、確かめる手段の位置">
+      <rect x="160" y="18" width="530" height="44" rx="8" style="fill:var(--soft);stroke:var(--line);stroke-width:1.5"/>
+      <text class="t tb m" x="425" y="45">④ 段階的委任：確かめられた範囲を任せ、実績で広げる</text>
+      <line x1="615" y1="62" x2="615" y2="104" style="stroke:var(--ink2);stroke-width:1.4;stroke-dasharray:4 4"/>
+
+      <rect x="20" y="108" width="110" height="62" rx="8" style="fill:var(--paper);stroke:var(--line);stroke-width:1.5"/>
+      <text class="t tb m" x="75" y="134">人</text><text class="ts m" x="75" y="154">要件・意図</text>
+      <line class="a" x1="130" y1="139" x2="157" y2="139"/>
+
+      <rect x="160" y="108" width="150" height="62" rx="8" style="fill:var(--soft);stroke:var(--line);stroke-width:1.5"/>
+      <text class="t tb m" x="235" y="134">① スペック</text><text class="ts m" x="235" y="154">正解を先に決める</text>
+      <line class="a" x1="310" y1="139" x2="337" y2="139"/>
+
+      <rect x="340" y="108" width="170" height="62" rx="8" style="fill:var(--soft);stroke:var(--line);stroke-width:1.5"/>
+      <text class="t tb m" x="425" y="134">② ハーネス</text><text class="ts m" x="425" y="154">AIが自分で確かめる環境</text>
+      <line class="a" x1="510" y1="139" x2="537" y2="139"/>
+
+      <rect x="540" y="104" width="150" height="70" rx="8" style="fill:var(--paper);stroke:var(--ink);stroke-width:3"/>
+      <text class="t tb m" x="615" y="134" style="font-size:14px">③ 検証</text><text class="ts m" x="615" y="155" style="fill:var(--ink)">正しさを確かめる</text>
+      <text class="ts m tb" x="615" y="192" style="fill:var(--ink)">全体の速度を決める所</text>
+      <line class="a" x1="690" y1="139" x2="717" y2="139"/>
+
+      <rect x="720" y="108" width="160" height="62" rx="8" style="fill:var(--paper);stroke:var(--line);stroke-width:1.5"/>
+      <text class="t tb m" x="800" y="134">人</text><text class="ts m" x="800" y="154">成果物を承認</text>
+
+      <rect x="160" y="226" width="530" height="50" rx="8" style="fill:var(--soft);stroke:var(--line);stroke-width:1.5"/>
+      <text class="t tb m" x="425" y="248">⑤ 自己修復ループ：市場の問題を、検知から修正・学習まで回し続ける</text>
+      <text class="ts m" x="425" y="266">直す前に再現テストを作る。直すたびに確かめる手段が1つ残る</text>
+      <path class="a" d="M800,170 V251 H693"/>
+      <text class="ts" x="808" y="214">リリース後</text>
+      <path class="a" d="M235,226 V173"/>
+      <text class="ts" x="243" y="210">仕様・テストへ還流</text>
+    </svg>
+    </div>
+    <figcaption>図1-1：5つの原則の位置づけ（元資料の図0を簡略化）。人が関わるのは左端の要件と右端の承認。その間で最も細いのが③の「確かめる」部分。</figcaption>
+  </figure>
+
+  <p>5つの原則を「確かめる手段」との関係で読み直すと、どの原則も、確かめる手段を作る・使う・増やすことに関わっています。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>原則</th><th>確かめる手段との関係</th><th>計画への示唆</th></tr></thead>
+    <tbody>
+      <tr><td><b>③ 検証</b></td><td>AIで作る速度が上がり、全体の速度は確かめる速度で決まるようになった</td><td>確かめる手段の量と質が、AI化率の上限になる</td></tr>
+      <tr><td><b>④ 段階的委任</b></td><td>任せられるかは「確かめやすさ」と「影響の大きさ」で決まる。任せる範囲を広げる正攻法は、確かめる手段を自動化すること</td><td>任せる範囲は、確かめる手段とともに広げる。上限は影響で決める</td></tr>
+      <tr><td><b>① スペック駆動</b></td><td>受入基準は「何を満たせば正解か」を表す。確かめる手段のものさしになる</td><td>新しい正解が必要な仕事は、ものさしを作ってから任せる</td></tr>
+      <tr><td><b>② ハーネス</b></td><td>確かめる手段を、AIが自分で使える形で環境に置く</td><td>AIが自分で確かめて直せるほど、人の確認は減る</td></tr>
+      <tr><td><b>⑤ 自己修復ループ</b></td><td>「再現が先、修正は後」。障害1件を直すごとに、再現テストという確かめる手段が1つ残る</td><td>障害対応を回すほど、任せられる範囲が広がる</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout key"><div class="ttl">ここから導いた結論</div>
+    AIに任せられる範囲は、AIの成果物を確かめられる範囲と同じ速さでしか広がらない。したがって、業務ごとに「確かめる手段が用意できているか」を見れば、任せる順番が決まる。<br>
+    <span style="font-size:14px;color:var(--ink2)">元資料の③でも「検証方法を示せないタスクは、AIに委任できない」と述べています。本計画ではこれを、確かめる手段を用意できた仕事から任せる、という進め方の基準として使います。</span></div>
+
+  <p>PMSにこの基準がとりわけよく当てはまるのは、自動テストがほとんどなく、確かめる手段の多くを人の経験に頼っているためです。今のPMSで一番細い部分がここなので、ここを太くする順に計画を組むのが最も効率的です。</p>
+
+  <h3>基準から、4つの問いに答える</h3>
+  <div class="callout key"><div class="ttl">業務ごとに問うこと</div>AIがこの仕事の成果物を出したら、<b>誰が、何を使って、どれくらいの手間で</b>正しいと確かめるのか。</div>
+  <div class="tbl"><table class="qa">
+    <thead><tr><th>決めたいこと</th><th>基準から導かれる答え</th><th>詳しくは</th></tr></thead>
+    <tbody>
+      <tr><td>どの業務を優先するか</td><td>確かめる手間が軽い業務から。回答・調査のように根拠と照らして人が読めば済む仕事が最初。次に、今の動作を正解としてテストで確かめる変更。最後に、新しい正解を先に決める必要がある変更。</td><td>2</td></tr>
+      <tr><td>どの原則から整備するか</td><td>その群の確かめる手段を作る原則から。群1のために⑤（自己修復ループの前半）と②（ハーネス）、群2のために③（検証：テストと実機の代わり）と④（委任）、群3のために①（スペック）を本格化する。</td><td>3・9</td></tr>
+      <tr><td>四半期ごとの目標レベル</td><td>確かめる手段が揃う四半期に合わせてレベルを上げる。上限は間違えたときの影響で決める。</td><td>3・7</td></tr>
+      <tr><td>並行か順次か</td><td>次の群の確かめる手段は、前の群を任せている間に並行して作る。任せ始めるのは、確かめる手段が揃ってから（順次）。</td><td>3・8</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>上限は影響の大きさで決める</h3>
+  <p>確かめる手段があれば任せられますが、どこまで任せるかは別の話です。たとえば<b>CVEの該当判定</b>は、製品構成と発現条件を照合すれば確かめられるので早く任せられます。一方で「該当しない」という誤答は顧客のセキュリティに直結するため、AIの判定を人が承認する形（L3）を上限にします。順番は確かめる手段で決め、上限は影響で決める。この2つを分けておくと、「早く始めること」と「慎重であること」が両立します。</p>
+
+  <h3>この基準を使うときの注意</h3>
+  <div class="grid">
+    <div class="card"><h4>確かめる手段はテストに限らない</h4><p>回答や調査結果は、出典を添えさせて人が照合することが確かめる手段になります。テストが揃うのを待たずに、確かめる手間が軽い仕事から今すぐ始められます。</p></div>
+    <div class="card"><h4>確かめる手段は作れる</h4><p>業務の確かめにくさは固定ではありません。再現テスト、製品構成の一覧、シミュレータを用意すれば、同じ業務が任せやすい側へ移ります。計画の中身の大半は、この「確かめる手段を作る」活動です。</p></div>
+  </div>
+</section>
+
+<section id="groups">
+  <div class="sec-head"><div class="num">2</div>
+    <h2>業務を「確かめる手段」で3つに分ける<small>現状の見える化（業務・工数・現在の自律レベル）</small></h2></div>
+
+  <div class="summary"><b class="lbl">要点</b><ul>
+    <li>10の業務を、何を正解として確かめるかの違いで3群に分ける。群1＝回答・判断（根拠が正解）、群2＝既存の動作を保つ変更（今の動作が正解）、群3＝新しい動作を加える変更（新しい正解を人が決める）。</li>
+    <li>群2と群3はどちらもテストと実行環境（実機またはその代わり）で確かめる。違いは正解がすでにあるかどうか。群3は受入基準で正解を先に決め、テストと実行環境は群2で作ったものを使う。</li>
+    <li>現状はほぼ全業務がL0〜L1。障害の原因調査だけが、既存の一次調査の自動化によりL2にある。</li>
+  </ul></div>
+
+  <figure>
+    <div class="figscroll">
+    <svg viewBox="0 0 900 380" role="img" aria-label="3つの業務群の階段構造">
+      <text class="ts m" x="450" y="14">確かめる手段が1つ増えるごとに、任せる群が1つ増える</text>
+      <line class="a" x1="160" y1="26" x2="740" y2="26"/>
+      <text class="ts m" x="160" y="120" style="font-weight:700">着手 2026Q4〜</text>
+      <text class="ts m" x="450" y="62" style="font-weight:700">任せ始め 2027Q2〜</text>
+      <!-- step1 -->
+      <rect x="20" y="130" width="280" height="190" rx="8" style="fill:var(--c2);fill-opacity:.14;stroke:var(--c2);stroke-width:1.5"/>
+      <text class="t tb" x="36" y="156" style="fill:var(--c2);font-size:15px">群1　根拠で確かめる</text>
+      <text class="t" x="36" y="180">出すもの：回答・調査結果・実現案</text>
+      <text class="t" x="36" y="202">正解：仕様・コード・既知問題</text>
+      <text class="ts" x="36" y="236">各問い合わせ対応</text>
+      <text class="ts" x="36" y="254">CVE該当判定・回避策</text>
+      <text class="ts" x="36" y="272">市場障害の受付・原因調査</text>
+      <text class="ts" x="36" y="290">案件相談</text>
+      <!-- step2 -->
+      <rect x="310" y="72" width="280" height="248" rx="8" style="fill:var(--c1);fill-opacity:.14;stroke:var(--c1);stroke-width:1.5"/>
+      <text class="t tb" x="326" y="98" style="fill:var(--c1);font-size:15px">群2　テストで確かめる</text>
+      <text class="t" x="326" y="122">出すもの：既存の動作を保つ変更</text>
+      <text class="t" x="326" y="144">正解：今の動作</text>
+      <text class="ts" x="326" y="174">市場障害の修正・展開</text>
+      <text class="ts" x="326" y="192">CVE修正モジュールの提供</text>
+      <text class="ts" x="326" y="210">OSS・ランタイムのEOS更新</text>
+      <text class="ts" x="326" y="228">環境対応（新OS・連携・新機種）</text>
+      <text class="ts" x="326" y="260">今の動作をそのまま期待値にして</text>
+      <text class="ts" x="326" y="278">再現テスト・回帰テストを書き、</text>
+      <text class="ts" x="326" y="296">実機またはその代わりで実行する</text>
+      <!-- step3 -->
+      <text class="ts m" x="740" y="44" style="font-weight:700">任せ始め 2027Q4〜</text>
+      <rect x="600" y="52" width="280" height="268" rx="8" style="fill:var(--c3);fill-opacity:.14;stroke:var(--c3);stroke-width:1.5"/>
+      <text class="t tb" x="616" y="78" style="fill:var(--c3);font-size:15px">群3　受入基準で確かめる</text>
+      <text class="t" x="616" y="102">出すもの：新しい動作を加える変更</text>
+      <text class="t" x="616" y="124">正解：人が新たに決める</text>
+      <text class="ts" x="616" y="154">案件個別対応</text>
+      <text class="ts" x="616" y="172">新機能開発</text>
+      <text class="ts" x="616" y="226">新しい正解を受入基準として先に書き、</text>
+      <text class="ts" x="616" y="244">テストにする。</text>
+      <text class="ts" x="616" y="272">テストの実行環境と、既存を壊して</text>
+      <text class="ts" x="616" y="290">いないかの回帰テストは群2のものを使う</text>
+      <!-- base -->
+      <rect x="20" y="330" width="860" height="40" rx="8" style="fill:var(--c4);fill-opacity:.13;stroke:var(--c4);stroke-width:1.5"/>
+      <text class="t tb m" x="450" y="355" style="fill:var(--c4)">共通基盤：AIの作業場（手順書・権限・サンドボックス・成果の計測と昇格ルール）</text>
+    </svg>
+    </div>
+    <figcaption>図2-1：3つの業務群。右の段ほど確かめる手段が重く、下の段で作った確かめる手段を使う。共通基盤は全群で使う。</figcaption>
+  </figure>
+
+  <div class="groups" id="groupCards" aria-live="polite"></div>
+  <p style="font-size:13px;color:var(--muted)">業務名の左は現在の自律レベル、右は工数比率（仮置き）。値は詳細編6の表で編集でき、ここにも反映されます。</p>
+
+  <h3>自律レベルの目盛り</h3>
+  <div class="tbl"><table>
+    <thead><tr><th class="c">レベル</th><th>AIがすること</th><th>人がすること</th></tr></thead>
+    <tbody>
+      <tr><td class="c"><span class="lv L0">L0</span></td><td>コード補完程度</td><td>すべて</td></tr>
+      <tr><td class="c"><span class="lv L1">L1</span></td><td>個人が質問・下調べに使う</td><td>作業の主体</td></tr>
+      <tr><td class="c"><span class="lv L2">L2</span></td><td>決まった手順を人の監督下で実行する</td><td>逐次確認</td></tr>
+      <tr><td class="c"><span class="lv L3">L3</span></td><td>成果物（回答案・PR）を最後まで作る</td><td>確認して承認</td></tr>
+      <tr><td class="c"><span class="lv L4">L4</span></td><td>低リスクと認定した種類は完結させる</td><td>例外と抜き取り確認</td></tr>
+      <tr><td class="c"><span class="lv L5">L5</span></td><td>すべて完結させる</td><td>要件と結果の確認のみ（本計画では目標にしない）</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="plan">
+  <div class="sec-head"><div class="num">3</div>
+    <h2>推奨の進め方<small>任せる群を1つずつ増やし、次の群の確かめる手段は並行して作る</small></h2></div>
+
+  <div class="summary"><b class="lbl">要点</b><ul>
+    <li>最初の2四半期は群1に集中して成果と指標を出す。その間に群2の確かめる手段（単体テスト基盤・再現テスト）を作る。</li>
+    <li>群2は2027Q2から任せ始める。群2の確かめる手段には、テストに加えて実機の代わり（デバイスシミュレータ・新OS検証環境）も含み、環境対応はそれが揃う2027Q3以降に広げる。群3の確かめる手段（受入基準・現状仕様ベースライン）は2027Q1から準備し、2027Q4から任せ始める。</li>
+    <li>共通基盤は全期間で並行。成果の計測は初日から始め、自動化を広げる判断はその実績で行う。</li>
+  </ul></div>
+
+  <figure>
+    <div class="figscroll"><svg id="roadmap" viewBox="0 0 980 400" role="img" aria-label="群ごとの準備と委任の時期"></svg></div>
+    <figcaption>図3-1：推奨ロードマップ。薄い帯＝確かめる手段を作る準備、濃い帯＝その群を任せて自律レベルを上げる期間、中間の帯＝運用しながら範囲を広げる期間。◆は次の段に進むための条件。</figcaption>
+  </figure>
+
+  <h3>4つの段階</h3>
+  <ol class="steps">
+    <li><b>2026Q4〜2027Q1　群1を任せる。</b>障害の一次調査を「仮説・証拠・再現手順・要確認点」の定型にし、各問い合わせ・CVE該当判定・案件相談で出典付きの回答案を作らせる。同時に群2のためにビルド判定の自動化と単体テスト基盤を作る。</li>
+    <li><b>2027Q2〜Q3　群2を任せ始める。</b>障害は再現テスト→修正PR→独立検証エージェントの判定→人の承認まで通す。依存更新・EOS・CVE修正モジュールもPRで出させる。環境対応のために、実機の代わり（デバイスシミュレータ・新OS検証環境の自動構築）を作り、2027Q3から回帰テストを実行できるようにする。群3のために、障害や案件が触れた機能から現状仕様を確定し始める。</li>
+    <li><b>2027Q4〜2028Q1　群3を任せ始める。</b>案件個別対応を受入基準付きで回す。テストの実行環境と回帰テストは群2で作ったものを使う。環境対応は実機の代わりで回帰テストを通したうえでPRを出させる。群2の低リスクな種類は自動マージを判断する。</li>
+    <li><b>2028Q2〜Q3　新機能へつなぐ。</b>仕様→実装→検証を通しで回し、新機能を低コストで試作する。「この費用で作れる」という実績を投資承認の根拠にする。</li>
+  </ol>
+
+  <h3>原則の整備順序（基準から導いたもの）</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>時期</th><th>任せる群</th><th>その確かめる手段を作る原則</th></tr></thead>
+    <tbody>
+      <tr><td>2026Q4〜</td><td><span class="tag g1" style="--gc:var(--c2)">群1</span> 根拠で確かめる</td><td>⑤ 自己修復ループ（検知〜原因分析）、② ハーネス（手順書・参照先・サンドボックス）</td></tr>
+      <tr><td>2027Q2〜</td><td><span class="tag" style="--gc:var(--c1)">群2</span> テストで確かめる</td><td>③ 検証（再現・単体・独立検証・実機の代わり）、④ 段階的委任（計測・昇格ルール）、⑤の後半（再現〜修正〜バックポート）</td></tr>
+      <tr><td>2027Q4〜</td><td><span class="tag" style="--gc:var(--c3)">群3</span> 受入基準で確かめる</td><td>① スペック駆動（受入基準・現状仕様ベースライン）</td></tr>
+    </tbody>
+  </table></div>
+  <p style="font-size:14px;color:var(--ink2)">①スペックは最後に「本格化」しますが、仕様の信頼度付けと索引は群1の出典として初年度から着手します。</p>
+
+  <h3>状況が変わったときの代替案</h3>
+  <div class="grid">
+    <div class="card"><h4><span class="tag">代替案1</span> E2Eが先行した場合</h4><p>E2Eプロジェクトが2027Q1までに基本機能のスモークをCIに載せられれば、群2の確かめる手段が早く揃います。群2の任せ始めを2027Q1に前倒しします。</p></div>
+    <div class="card"><h4><span class="tag">代替案2</span> 新機能の低コスト化を早く示したい場合</h4><p>群3のうち、小規模な案件個別対応だけを2027Q2から受入基準付きで試行します。受入基準の一部を人の受入確認で補う形です。群2の修正PR段階は1四半期遅らせて人員を回します。</p></div>
+    <div class="card"><h4><span class="tag">代替案3</span> 品質リスクを最優先する場合</h4><p>全業務の上限をL3にし、自動で完結させる（L4）ことは計画期間中は行いません。代わりに独立検証エージェントを厚くし、人の確認を「要確認点」だけに絞ってレビュー負荷を下げます。</p></div>
+  </div>
+</section>
+
+<section id="first">
+  <div class="sec-head"><div class="num">4</div>
+    <h2>最初の四半期（2026Q4）にやること<small>6つの活動を並行して始める</small></h2></div>
+  <ol class="steps">
+    <li><span class="tag" style="--gc:var(--c2)">群1</span> <b>一次調査の出力を定型化する。</b>「原因の仮説と根拠」「棄却した仮説」「再現手順」「既知問題との照合結果」「人が確認すべき点」の5項目を必須にする。担当者が調査結果を採用したか（採用／一部／不採用）を記録し、最初の指標にする。</li>
+    <li><span class="tag" style="--gc:var(--c2)">群1</span> <b>各問い合わせ対応とCVE該当判定で、出典付きの回答案を作らせる。</b>マニュアル・仕様・既知不具合・過去の回答を横断し、どの文書のどこを根拠にしたかを必ず添える。担当者は根拠を確認して送る。</li>
+    <li><span class="tag" style="--gc:var(--c2)">群1</span> <b>案件相談の実現案を3つの型で下書きさせる。</b>既存機能の組み合わせ／SDKによる現地カスタマイズ／案件個別バージョン開発、の3案を、根拠となる機能仕様とSDKの範囲を添えて出させる。過去の案件相談の記録を集め始める。</li>
+    <li><span class="tag" style="--gc:var(--c2)">群1</span> <b>仕様書に信頼度を付ける。</b>AsciiDoc化した仕様を機能ごとに「確認済み／未確認／粒度不足」に分け、索引を作る。分類はAIが下書きする。回答の根拠が未確認の仕様なら、回答案にその旨を表示する。</li>
+    <li><span class="tag" style="--gc:var(--c1)">群2準備</span> <b>Jenkinsのビルド結果判定をAIに任せる。</b>ナイトリービルドの結果をAIが判定・要約し、失敗はチケットにする。静的解析ツールを1つ導入する（警告は当面は情報のみ）。</li>
+    <li><span class="tag" style="--gc:var(--c4)">共通基盤</span> <b>AIの作業場と計測を用意する。</b>既存のskillsのディレクトリ地図を起点に、ビルド・テスト手順、触ってはいけない箇所、参照すべき文書の場所をリポジトリに置く（AGENTS.md）。実行環境はサンドボックスに限定し、外部LLM利用の範囲とデータの扱いを文書化する。</li>
+  </ol>
+</section>
+
+<section id="decide">
+  <div class="sec-head"><div class="num">5</div>
+    <h2>会議で決めること<small>基本編の着地点</small></h2></div>
+  <ol class="steps">
+    <li><b>判断基準の採用</b>：順序は確かめる手段で決め、上限はリスクで決める、を計画の軸にするか。</li>
+    <li><b>業務の3群への分け方</b>：特に、案件相談を群1（回答・判断）に置くこと、群2と群3を「正解がすでにあるか」で分けることに合意できるか。</li>
+    <li><b>最初の2四半期の集中先</b>：群1に集中し、群2・群3は確かめる手段の準備に充てること。</li>
+    <li><b>2027Q3末の目標レベルと各業務の上限</b>（詳細編7の表）。</li>
+    <li><b>E2Eプロジェクトとの接続点</b>：2027Q1にスモークテストをCIへ、2027Q3にデバイスシミュレータ。責任者と時期を握る。</li>
+    <li><b>指標と昇格・降格ルール</b>（詳細編10）。</li>
+    <li><b>ガードレール</b>：顧客環境・出荷物への書き込み権限は与えない、診断データのマスキング、再試行の上限、テストの削除・弱体化を含む変更は人の確認必須。</li>
+    <li><b>担当と工数枠</b>：確かめる手段を作る活動を「本業の合間」にしない。主担当1〜2名と四半期ごとの工数枠を決める。</li>
+  </ol>
+</section>
+
+<!-- ================= 詳細編 ================= -->
+<div class="divider" id="detail"><b>詳細編</b><span>基本編の判断を支える数値・活動・原則との対応。会議で数値を調整するときに使う。</span></div>
+
+<section id="assess" class="detail-sec">
+  <div class="sec-head"><div class="num">6</div>
+    <h2>現状評価（編集可）<small>業務ごとの工数・確かめやすさ・リスク・証拠の入手性</small></h2></div>
+
+  <div class="tbl"><table>
+    <thead><tr><th>指標</th><th>意味</th><th>目盛り</th></tr></thead>
+    <tbody>
+      <tr><td><b>工数%</b></td><td>チーム全体の工数に占める割合</td><td>合計100。初期値はヒアリングからの仮置き</td></tr>
+      <tr><td><b>確かめやすさ</b></td><td>AIの成果物の正誤を、少ない人手で判定できる度合い</td><td>1 実機・顧客環境でしか確かめられない ↔ 5 機械的に判定できる</td></tr>
+      <tr><td><b>影響リスク</b></td><td>間違えたときの顧客影響と取り消しにくさ</td><td>1 小（社内向けの文面） ↔ 5 大（出荷物・セキュリティ）</td></tr>
+      <tr><td><b>証拠</b></td><td>AIが判断に使える材料（ログ・再現手順・仕様・既知問題）が手元に届く度合い</td><td>1 顧客に都度依頼が必要 ↔ 5 チケットに揃っている</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="toolbar">
+    <span>自律レベルはクリックで変更、数値は直接入力。この端末のブラウザに保存されます。</span>
+    <button class="btn" id="btnReset" type="button">初期値に戻す</button>
+    <button class="btn" id="btnCopy" type="button">現在の値をコピー</button>
+    <span id="copyMsg" aria-live="polite"></span>
+  </div>
+  <div class="tbl"><table id="taskTable">
+    <thead><tr><th>業務</th><th>いま何をしているか</th><th class="c">自律<br>レベル</th><th class="c">工数%</th><th class="c">確かめ<br>やすさ</th><th class="c">影響<br>リスク</th><th class="c">証拠</th></tr></thead>
+    <tbody></tbody>
+    <tfoot><tr><td colspan="3" style="text-align:right;color:var(--muted)">工数合計</td><td class="c" id="wlSum">—</td><td colspan="3"></td></tr></tfoot>
+  </table></div>
+  <textarea id="jsonOut" hidden aria-label="現在の値（JSON）"></textarea>
+
+  <h3>委任マトリクス上の位置</h3>
+  <figure>
+    <div class="figscroll"><svg id="matrix" viewBox="0 0 760 640" role="img" aria-label="確かめやすさと影響リスクの2軸に業務を配置"></svg></div>
+    <figcaption>図6-1：横軸＝確かめやすさ、縦軸＝影響リスク。円の色＝業務群、大きさ＝工数比率。右下ほど任せやすい。群1が右側に集まり、群2・群3は左側に残る。群2はテストと実機の代わりを作ると右へ動き、群3はさらに受入基準が揃うと右へ動く。</figcaption>
+  </figure>
+
+  <h3>検算：多因子スコアでも同じ順序になるか</h3>
+  <p style="font-size:14px;color:var(--ink2)">工数・確かめやすさ・リスクの低さ・証拠・伸びしろを重み付けして採点します。上位に群1が集まれば、基準に沿った順序と多因子の評価が一致していると言えます。重みを動かしても上位が変わらなければ、その順序は頑健です。</p>
+  <div class="weights">
+    <label>工数比率 <span id="wWl"></span><input type="range" id="w_wl" min="0" max="5" step="0.5" value="3"></label>
+    <label>確かめやすさ <span id="wVe"></span><input type="range" id="w_ve" min="0" max="5" step="0.5" value="4"></label>
+    <label>リスクの低さ <span id="wRi"></span><input type="range" id="w_ri" min="0" max="5" step="0.5" value="1"></label>
+    <label>証拠の入手性 <span id="wSi"></span><input type="range" id="w_si" min="0" max="5" step="0.5" value="2"></label>
+    <label>伸びしろ（5−現在レベル） <span id="wHe"></span><input type="range" id="w_he" min="0" max="5" step="0.5" value="1"></label>
+  </div>
+  <div class="rank" id="rank"></div>
+</section>
+
+<section id="targets" class="detail-sec">
+  <div class="sec-head"><div class="num">7</div>
+    <h2>四半期ごとの目標レベル（編集可）<small>確かめる手段が揃う時期に合わせ、上限はリスクで決める</small></h2></div>
+  <div class="toolbar"><span>目標セルと上限はクリックで変更できます。上限を超えた目標は赤い破線で示します。</span>
+    <span class="legend"><i style="background:var(--l0)"></i>L0 <i style="background:var(--l1)"></i>L1 <i style="background:var(--l2)"></i>L2 <i style="background:var(--l3)"></i>L3 <i style="background:var(--l4)"></i>L4</span></div>
+  <div class="tbl"><table class="qgrid" id="qTable">
+    <thead><tr><th>業務</th><th class="c">現状</th><th class="q">26Q4</th><th class="q">27Q1</th><th class="q">27Q2</th><th class="q">27Q3</th><th class="q">27Q4</th><th class="q">28Q1</th><th class="q">28Q2</th><th class="q">28Q3</th><th class="c">上限</th><th>上限の理由</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+
+  <h3>1年後・2年後の姿</h3>
+  <div class="vs">
+    <div><span class="h">2027年Q3末（4四半期後）</span>各問い合わせ対応と障害の原因調査は、定型のものをAIが完結させ、人は抜き取り確認（L4）。CVE該当判定と案件相談はAIの判定・実現案を人が承認（L3）。障害はAIが再現テストと修正PRまで作り、独立検証エージェントの判定を見て人が承認（L3）。依存更新・EOSもPRで出てくる。指標が四半期ごとに集計されている。</div>
+    <div><span class="h">2028年Q3末（8四半期後）</span>既知パターンの障害修正と依存更新は、低リスクと認定したものが自動でマージされる（L4）。環境対応は実機の代わりで回帰テストを通したうえで人が承認（L3）。案件個別対応は受入基準をテストにして確かめたうえで人が承認（L3）。新機能は仕様から試作までを低コストで回せ、投資判断の材料になる。人の主な仕事は、仕様の承認、要確認点の判断、確かめる手段の改善。</div>
+  </div>
+</section>
+
+<section id="streams" class="detail-sec">
+  <div class="sec-head"><div class="num">8</div>
+    <h2>活動の詳細<small>共通基盤＋3つの「確かめる手段を作る」活動</small></h2></div>
+  <p>活動は4本に整理しました。3本は各群の確かめる手段を作る活動で、群の色と対応しています。残り1本は全群で使う共通基盤です。</p>
+  <div class="tbl"><table class="stream" id="streamTable">
+    <thead><tr><th>活動</th><th>26Q4</th><th>27Q1</th><th>27Q2</th><th>27Q3</th><th>27Q4</th><th>28Q1</th><th>28Q2</th><th>28Q3</th></tr></thead>
+    <tbody></tbody>
+  </table></div>
+
+  <h3>順序の制約</h3>
+  <div class="grid">
+    <div class="card"><h4>単体テスト基盤・独立検証 → 修正PR</h4><p>再現テストを書ける土台（27Q1）と、作る役とは別の確かめる役（27Q2）がないと、修正が効いたかを確かめられない。群2を任せ始める条件。</p></div>
+    <div class="card"><h4>実機の代わり → 環境対応の委任</h4><p>新OS・新機種で「従来通り動くか」は、回帰テストを実機またはその代わりで実行して確かめる。デバイスシミュレータ（27Q3）と新OS検証環境（27Q2）が揃ってから任せる。</p></div>
+    <div class="card"><h4>仕様ベースライン → 案件個別対応の委任</h4><p>既存機能の現状仕様が確定していないと、案件ごとの差分を受入基準として書けない（27Q3→27Q4）。</p></div>
+    <div class="card"><h4>2四半期分の実績 → 自動マージ</h4><p>承認率と流出不具合を2四半期以上集計してから、L4を判断する（28Q1）。</p></div>
+  </div>
+
+  <h3>E2Eプロジェクトとの接続点</h3>
+  <p>基本機能のE2Eテストは別プロジェクトが担います。本計画は重複して作らず、次の2点で成果を取り込みます。<b>27Q1</b>：基本機能のスモークテストをJenkinsで毎晩実行し、AIの修正PRの確かめる手段に加える。<b>27Q3</b>：デバイスシミュレータ（SNMP・IPPの応答を模擬）を共同で作り、群2の回帰テストと環境対応の実行環境にする。</p>
+</section>
+
+<section id="principles" class="detail-sec">
+  <div class="sec-head"><div class="num">9</div>
+    <h2>5つの原則との対応<small>5原則は、この基準を実行するための部品</small></h2></div>
+  <p>5つの原則を、判断基準の言葉で言い換えると次のようになります。原則を個別に進めるのではなく、「確かめる手段を作る」ために必要になった原則をその時点で整備する、という位置づけです。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>原則</th><th>基準の中での役割</th><th>主に効く群・活動</th><th class="c">現状</th><th class="c">27Q3末</th><th class="c">28Q3末</th></tr></thead>
+    <tbody>
+      <tr><td><b>① スペック駆動</b></td><td>「何が正しいか」を先に決める。確かめる基準そのもの</td><td>群3（新しい正解を決める）。群1では出典の信頼度として効く</td><td class="c">1.5</td><td class="c">2.5</td><td class="c">3.5</td></tr>
+      <tr><td><b>② ハーネス</b></td><td>確かめる手段と文脈を、毎回AIに届ける器</td><td>共通基盤</td><td class="c">1.5</td><td class="c">3</td><td class="c">4</td></tr>
+      <tr><td><b>③ 検証</b></td><td>確かめる仕組みそのもの。安い層から多層に重ねる</td><td>群2の主役（テストと実機の代わり）。群3もその上で確かめる</td><td class="c">0.5</td><td class="c">2.5</td><td class="c">4</td></tr>
+      <tr><td><b>④ 段階的委任</b></td><td>確かめられた範囲だけ任せ、実績で広げる。上限はリスク</td><td>共通基盤（計測・昇格ルール）</td><td class="c">1</td><td class="c">2.5</td><td class="c">4</td></tr>
+      <tr><td><b>⑤ 自己修復ループ</b></td><td>確かめる手段を増やし続ける仕組み。障害1件ごとに再現テストが1本残る</td><td>群1（検知〜原因分析）→ 群2（再現〜修正〜バックポート）</td><td class="c">1.5</td><td class="c">3.5</td><td class="c">4.5</td></tr>
+    </tbody>
+  </table></div>
+  <p style="font-size:13px;color:var(--muted)">整備度は0〜5。0〜1＝個人の工夫レベル、2〜3＝仕組みがあり運用が始まっている、4〜5＝定着して自走している。</p>
+
+  <h3>既にある資産の位置づけ</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>いまある資産</th><th>原則</th><th>どの確かめる手段になるか</th><th>足すもの</th></tr></thead>
+    <tbody>
+      <tr><td>チケット→一次調査の自動化</td><td>⑤</td><td>群1：調査結果を出典付きで出す仕組みの原型</td><td>出力の定型化、採否の記録、既知問題との照合</td></tr>
+      <tr><td>AsciiDoc化済み仕様（1,000ページ超、未確認）</td><td>①</td><td>群1：回答の出典／群3：現状仕様のベースライン候補</td><td>機能ごとの信頼度と索引。変更が触れた機能から人が確認</td></tr>
+      <tr><td>C4設計（Structurizr DSL、5割）</td><td>①②</td><td>群3：影響範囲を見積もる単位</td><td>残り5割をAIが下書きし人が確認</td></tr>
+      <tr><td>機能単位のディレクトリ地図（skills）</td><td>②</td><td>共通基盤：AGENTS.mdの原型</td><td>手順・禁止事項・参照先を追加してリポジトリに置く</td></tr>
+      <tr><td>Jenkinsナイトリービルド</td><td>③</td><td>群2：確かめる手段の第0層</td><td>AIによる判定と要約、静的解析</td></tr>
+      <tr><td>E2Eテスト整備（別プロジェクト）</td><td>③</td><td>群2：回帰テストと実機の代わり（群3も共用）</td><td>CIへの組み込み時期を握る</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="metrics" class="detail-sec">
+  <div class="sec-head"><div class="num">10</div>
+    <h2>指標・リスク・ガードレール<small>任せる範囲を実績で広げるための仕組み</small></h2></div>
+
+  <h3>計測する指標</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>指標</th><th>何を表すか</th><th>使い方</th></tr></thead>
+    <tbody>
+      <tr><td>修正なし採用率</td><td>AIの成果物（調査結果・回答案・実現案・PR）がそのまま採用された割合</td><td>業務ごとに集計。直近20件で高水準かつ流出ゼロなら1段昇格の候補</td></tr>
+      <tr><td>差し戻し回数／件</td><td>人が指摘して作り直させた回数</td><td>多い業務は、足りない確かめる手段・文脈を分析する</td></tr>
+      <tr><td>人の確認時間／件</td><td>確認・修正に人がかけた時間</td><td>従来の所要時間と比べて削減効果を示す</td></tr>
+      <tr><td>流出不具合・誤回答</td><td>AIが関わった成果物で、後から見つかった誤り</td><td>1件で1段降格。責めずに、欠けていた確かめる手段を足す</td></tr>
+      <tr><td>出典の確認済み率</td><td>回答の根拠のうち、確認済み仕様を使えた割合</td><td>群1の確かめやすさの実体。仕様確認の優先順位に使う</td></tr>
+      <tr><td>再現テストの蓄積数</td><td>障害対応で残った回帰テストの数</td><td>群2の確かめる手段の実体。任せる範囲の判断に使う</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>主なリスクと手当て</h3>
+  <div class="grid">
+    <div class="card"><h4>序盤に速くならない</h4><p>確かめる手段を作る期間は生産性が上がりにくい。最初の2四半期は「削減」より「指標が取れている」「出典付きで出ている」を成果と定義する。</p></div>
+    <div class="card"><h4>テストに合わせる修正</h4><p>受入テストはAIが変更できないようにする。テスト削除・アサーションの弱体化・例外の握りつぶしは自動で人の確認へ回す。</p></div>
+    <div class="card"><h4>出典が古い・誤っている</h4><p>未確認の仕様を根拠にした回答は、その旨を表示して人が確認する。誤りが見つかった仕様は、その場で確認済みに更新する。</p></div>
+    <div class="card"><h4>E2Eの遅れ</h4><p>群2は単体テストと再現テストで先に始められる。環境対応はシミュレータが揃うまで人の実機確認を残し、上限をL2〜L3にとどめる。</p></div>
+    <div class="card"><h4>データの取り扱い</h4><p>診断データの個人情報・印刷ログはAIに渡す前にマスキングする。外部LLM利用の範囲と記録方法を最初の四半期に文書化する。</p></div>
+    <div class="card"><h4>個人の工夫が埋もれる</h4><p>VS Code上の個人利用で得た手順は、四半期ごとにAGENTS.mdやskillsへ取り込む場を設ける。</p></div>
+  </div>
+
+  <h3>参考</h3>
+  <ul class="refs">
+    <li>プロジェクト内「AI中心開発の5つの原則」（ai-native-dev-5-concepts.html）── 判断基準は「③ 検証」の章にある「検証方法を示せないタスクは、AIに委任できない」</li>
+    <li><a href="https://openai.com/index/harness-engineering/">Harness engineering: leveraging Codex in an agent-first world</a>（OpenAI）</li>
+    <li><a href="https://www.thoughtworks.com/en-us/radar/techniques/spec-driven-development">Technology Radar: Spec-driven development</a>（Thoughtworks）</li>
+    <li><a href="https://sentry.io/resources/automated-debugging/">Automated Debugging &amp; AI Root Cause Analysis</a>（Sentry）</li>
+  </ul>
+</section>
+
+<footer>2026年9月27日作成（改訂2：業務の切り口を統一し、判断基準を軸に再構成）。数値は議論のための仮置きで、合意後に更新する。</footer>
+</div>
+
+<script>
+(function(){
+  var GROUPS = {
+    1:{name:"群1　根拠で確かめる", color:"c2", out:"回答・調査結果・判断・実現案", how:"出典（仕様・マニュアル・コード・既知問題・過去事例）を添えさせ、人が根拠と照らして読む", lack:"仕様の信頼度、既知問題と過去回答の索引、製品構成の一覧、顧客環境の証拠", when:"2026Q4から任せる"},
+    2:{name:"群2　テストで確かめる", color:"c1", out:"既存の動作を保つコード変更（修正・更新・新しい環境への追従）", how:"今の動作を期待値にした再現テスト・回帰テストを、実機またはその代わりで実行して通るか", lack:"自動テストがほぼない。ビルド結果の判定が手動。実機の代わり（シミュレータ・新OS検証環境）がない", when:"準備 2026Q4〜、任せ始め 2027Q2（環境対応は2027Q3〜）"},
+    3:{name:"群3　受入基準で確かめる", color:"c3", out:"新しい動作を加えるコード変更", how:"新しい正解を人が受入基準として先に決め、テストにして群2の実行環境で確かめる", lack:"受入基準の書き方、現状仕様のベースライン", when:"準備 2027Q1〜、任せ始め 2027Q4"}
+  };
+  var DEFAULT_TASKS = [
+    {id:"inv", g:1, name:"市場障害の受付・原因調査", now:"チケット発行を起点に、AIが一次調査結果を書き戻す自動化を運用中。原因の確定と再現は人", level:2, wl:15, ve:3, ri:2, si:3, cap:4, why:"社内向けの調査で、誤りは修正段階で検出できる"},
+    {id:"inq", g:1, name:"各問い合わせ対応", now:"利用方法・仕様・案件ごとの動作環境のサポート可否など、販売・導入時の問い合わせ。担当者がマニュアル・仕様・過去回答を調べて回答", level:1, wl:12, ve:4, ri:1, si:4, cap:4, why:"定型の問い合わせに限る。新規の判断を含むものはL3"},
+    {id:"cvej", g:1, name:"CVE該当判定・回避策の案内", now:"発現条件と製品構成の突き合わせ、回避策の検討、回答作成を人が実施", level:1, wl:7, ve:3, ri:3, si:4, cap:3, why:"「該当しない」の誤答はセキュリティに直結する"},
+    {id:"cons", g:1, name:"案件相談", now:"商品機能で不足する案件について、既存機能の活用／SDKによる現地カスタマイズ／案件個別バージョン開発の実現案を検討。有識者の経験に依存", level:1, wl:7, ve:3, ri:3, si:2, cap:3, why:"顧客への提案と見積に直結する"},
+    {id:"fix", g:2, name:"市場障害の修正・展開", now:"個人がVS Code上でAIを補助的に使用。テストは手動、複数バージョンへの移植も人", level:1, wl:15, ve:2, ri:4, si:3, cap:4, why:"既知パターンで影響範囲が小さいものに限る"},
+    {id:"cvem", g:2, name:"CVE修正モジュールの提供", now:"OSS更新・パッチ適用・ビルド・検証・配布を人が実施", level:0, wl:6, ve:2, ri:3, si:3, cap:3, why:"顧客に届く出荷物で、出荷判断は人が持つ"},
+    {id:"eos", g:2, name:"OSS・ランタイムのEOS更新", now:"更新計画・差分吸収・検証を人が実施。定型だが検証が重い", level:0, wl:8, ve:2, ri:3, si:2, cap:4, why:"マイナー更新でテストが揃う範囲に限る"},
+    {id:"env", g:2, name:"環境対応（新OS・連携システム・新機種）", now:"新OS、連携システムのバージョンアップ、新しい複合機・プリンタへの対応。調査・修正・実機検証を人が実施", level:0, wl:16, ve:1, ri:3, si:2, cap:3, why:"実機の挙動差を代替環境で確かめきれない機種・OSが残る"},
+    {id:"cust", g:3, name:"案件個別対応", now:"国・案件固有の要求に対し、案件ごとにカスタマイズしたバージョンを開発・保守", level:1, wl:9, ve:2, ri:2, si:2, cap:3, why:"顧客ごとに受入確認が必要"},
+    {id:"newf", g:3, name:"新機能開発", now:"要求は多いが投資承認が下りにくい。着手できた場合はAIを個人利用", level:1, wl:5, ve:2, ri:3, si:1, cap:3, why:"何を作るかの判断は人が持つ"}
+  ];
+  var DEFAULT_Q = {
+    inv:[2,3,3,4,4,4,4,4], inq:[2,3,3,4,4,4,4,4], cvej:[2,2,3,3,3,3,3,3], cons:[1,2,3,3,3,3,3,3],
+    fix:[1,1,2,3,3,3,4,4], cvem:[0,1,2,3,3,3,3,3], eos:[0,1,2,3,3,4,4,4],
+    env:[0,0,1,2,3,3,3,3], cust:[1,1,1,2,3,3,3,3], newf:[1,1,1,1,2,2,3,3]
+  };
+  var DEFAULT_W = {wl:3,ve:4,ri:1,si:2,he:1};
+  var STREAMS = [
+    {name:"共通基盤：AIの作業場", color:"c4", q:[
+      "AGENTS.md v1、AI利用ガイドライン、サンドボックス、指標の計測開始",
+      "lint・依存ルールの機械強制（エラー文に直し方を書く）、業務別のレベル定義",
+      "昇格・降格ルールの運用、役割の定義（仕様・確かめる手段・オーケストレーション）",
+      "掃除エージェント、権限・時間・費用の枠",
+      "失敗から作業場を直すふりかえりを定例化",
+      "低リスク領域の自動マージを判断",
+      "運用・改善", "総括と次期計画"]},
+    {name:"根拠を揃える（群1）", color:"c2", q:[
+      "一次調査の出力定型化、出典付き回答案（問い合わせ・CVE判定）、案件相談の3型の実現案、仕様の信頼度付けと索引",
+      "既知問題・過去回答・過去の案件相談の索引",
+      "製品構成の一覧（SBOM）でCVE該当判定を機械照合、構造化ログとエラーIDの設計",
+      "問い合わせを分類ごとの専門エージェントに分割、診断バンドルの実装",
+      "診断バンドル出荷、一次調査の入力に接続",
+      "同意を得たうえでのエラー情報の定期送信を検討",
+      "運用・改善", "運用・改善"]},
+    {name:"テストを貯める（群2）", color:"c1", q:[
+      "ビルド結果のAI判定と要約、静的解析の導入",
+      "変更箇所の単体テスト基盤、再現テストの自動生成、E2EスモークをCIへ（E2E PJ）、実機の代わりの対象（機種・OS）を選定",
+      "修正PRの生成、独立検証エージェント、受入テストの保護、新OS検証環境の自動構築",
+      "夜間バッチ（調査→再現→PR）、依存更新・EOSのPR自動化、デバイスシミュレータ初版（E2E PJ）",
+      "シミュレータをCIへ、環境対応をPRで出させる、複数バージョンへの移植の自動化、契約テスト",
+      "既知パターンの修正と依存更新の自動マージ、ミューテーションテスト",
+      "障害から回帰テスト・lintを自動で追加", "運用・改善"]},
+    {name:"受入基準を作る（群3）", color:"c3", q:[
+      "",
+      "障害・案件が触れた機能から現状仕様を確定、受入基準（EARS）の試行",
+      "C4設計の残り5割をAIが下書き、ADRの運用",
+      "主要機能の現状仕様ベースライン、案件個別対応の受入基準テンプレート",
+      "案件個別対応を受入基準付きで委任（テストは群2の実行環境で実行）",
+      "仕様差分のない変更はマージしない運用を試行",
+      "新機能を仕様から試作（投資承認の根拠づくり）", "仕様を変更の起点にする運用の定着"]}
+  ];
+  var KEY = "pms-ai-roadmap-v3";
+  function clone(o){ return JSON.parse(JSON.stringify(o)); }
+  function fresh(){ return {tasks:clone(DEFAULT_TASKS), q:clone(DEFAULT_Q), w:clone(DEFAULT_W)}; }
+  var state = fresh();
+  try{ var raw = localStorage.getItem(KEY); if(raw){ var p = JSON.parse(raw);
+    if(p.tasks && p.tasks.length===DEFAULT_TASKS.length) state.tasks = p.tasks;
+    if(p.q) state.q = p.q; if(p.w) state.w = p.w; } }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function lv(l, extra, attrs){ return '<span class="lv L'+l+' '+(extra||'')+'" '+(attrs||'')+'>L'+l+'</span>'; }
+  function clamp(v,a,b){ v=+v; if(isNaN(v)) v=a; return Math.max(a,Math.min(b,v)); }
+  function gcol(g){ return 'var(--'+GROUPS[g].color+')'; }
+
+  /* ---------- group cards ---------- */
+  function renderGroups(){
+    var total = state.tasks.reduce(function(a,t){return a+t.wl;},0) || 1;
+    var h = "";
+    [1,2,3].forEach(function(g){
+      var G = GROUPS[g]; var ts = state.tasks.filter(function(t){return t.g===g;});
+      var sum = ts.reduce(function(a,t){return a+t.wl;},0);
+      h += '<div class="gcard" style="--gc:'+gcol(g)+'"><div class="gh"><strong>'+esc(G.name)+'</strong><span class="pill">工数 '+Math.round(sum/total*100)+'%</span></div>'+
+        '<dl><dt>出すもの</dt><dd>'+esc(G.out)+'</dd><dt>確かめる手段</dt><dd>'+esc(G.how)+'</dd><dt>足りない</dt><dd>'+esc(G.lack)+'</dd></dl>'+
+        '<ul class="tasks">';
+      ts.forEach(function(t){ h += '<li>'+lv(t.level)+'<span>'+esc(t.name)+'</span><span class="w">'+t.wl+'%</span></li>'; });
+      h += '</ul><div class="when">'+esc(G.when)+'</div></div>';
+    });
+    document.getElementById("groupCards").innerHTML = h;
+  }
+
+  /* ---------- roadmap ---------- */
+  function renderRoadmap(){
+    var X0=210, X1=965, qw=(X1-X0)/8, Y0=46, rh=70;
+    var qn=["26Q4","27Q1","27Q2","27Q3","27Q4","28Q1","28Q2","28Q3"];
+    var rows = [
+      {label:"共通基盤", sub:"AIの作業場", c:"c4", seg:[[0,4,'go','作業場と計測を作る','手順書・サンドボックス・指標・昇格ルール'],[4,8,'run','運用しながら広げる','実績に基づき自動マージを判断']]},
+      {label:"群1", sub:"根拠で確かめる", c:"c2", seg:[[0,3,'go','群1を任せる　L1→L4','出典付きの回答案・調査の定型化'],[3,8,'run','運用・拡大','証拠の強化（診断バンドル・SBOM）']]},
+      {label:"群2", sub:"テストで確かめる", c:"c1", seg:[[0,2,'prep','確かめる手段を作る','ビルド判定・単体・再現テスト'],[2,6,'go','群2を任せる　L0-1→L3-4','修正PR・依存更新・環境対応（シミュレータ）'],[6,8,'run','運用','']]},
+      {label:"群3", sub:"受入基準で確かめる", c:"c3", seg:[[1,4,'prep','確かめる手段を作る','現状仕様の確定・受入基準の型'],[4,8,'go','群3を任せる　L1→L3','案件個別対応・新機能の試作']]}
+    ];
+    var s = '';
+    for(var i=0;i<=8;i++){ s += '<line class="gridl" x1="'+(X0+i*qw)+'" y1="'+(Y0-6)+'" x2="'+(X0+i*qw)+'" y2="'+(Y0+rows.length*rh)+'"/>'; if(i<8) s += '<text class="ts m tb" x="'+(X0+i*qw+qw/2)+'" y="'+(Y0-14)+'">'+qn[i]+'</text>'; }
+    rows.forEach(function(r,ri){
+      var y = Y0 + ri*rh;
+      s += '<text class="t tb" x="16" y="'+(y+rh/2-2)+'" style="fill:var(--'+r.c+');font-size:14px">'+r.label+'</text>';
+      s += '<text class="ts" x="16" y="'+(y+rh/2+16)+'">'+r.sub+'</text>';
+      r.seg.forEach(function(sg){
+        var bx = X0+sg[0]*qw+3, bw = (sg[1]-sg[0])*qw-6, by=y+10, bh=rh-20;
+        var op = sg[2]==='go' ? .85 : sg[2]==='run' ? .32 : .14;
+        s += '<rect x="'+bx+'" y="'+by+'" width="'+bw+'" height="'+bh+'" rx="6" style="fill:var(--'+r.c+');fill-opacity:'+op+';'+(sg[2]==='prep'?'stroke:var(--'+r.c+');stroke-width:1.4;stroke-dasharray:5 4':'')+'"/>';
+        var tc = sg[2]==='go' ? 'var(--paper)' : 'var(--ink)';
+        var sc = sg[2]==='go' ? 'var(--paper)' : 'var(--muted)';
+        s += '<text x="'+(bx+10)+'" y="'+(by+(sg[4]?20:30))+'" style="fill:'+tc+';font-size:12.5px;font-weight:700">'+esc(sg[3])+'</text>';
+        if(sg[4]) s += '<text x="'+(bx+10)+'" y="'+(by+38)+'" style="fill:'+sc+';font-size:11px;opacity:.95">'+esc(sg[4])+'</text>';
+      });
+    });
+    function gate(qEnd, ri, label){
+      var x = X0+qEnd*qw, y = Y0+ri*rh+rh/2;
+      s += '<path d="M'+x+','+(y-9)+' L'+(x+9)+','+y+' L'+x+','+(y+9)+' L'+(x-9)+','+y+' Z" style="fill:var(--ink);stroke:var(--paper);stroke-width:1.5"/>';
+      s += '<text class="ts m tb" x="'+(x+15)+'" y="'+(y-10)+'" style="fill:var(--ink)">'+esc(label)+'</text>';
+    }
+    gate(2,2,'1');
+    gate(4,3,'2');
+    s += '<text class="ts" x="16" y="'+(Y0+rows.length*rh+22)+'" style="fill:var(--ink)">◆1 27Q1末：単体テスト基盤と再現テストが使える　　◆2 27Q3末：主要機能の現状仕様ベースラインができている</text>';
+    s += '<text class="ts" x="16" y="'+(Y0+rows.length*rh+44)+'">薄い破線の帯＝確かめる手段を作る準備　濃い帯＝任せてレベルを上げる　中間の帯＝運用しながら範囲を広げる</text>';
+    document.getElementById("roadmap").innerHTML = s;
+  }
+
+  /* ---------- task table ---------- */
+  var tbody = document.querySelector("#taskTable tbody");
+  function renderTasks(){
+    var h = "", last = 0;
+    state.tasks.forEach(function(t,i){
+      if(t.g!==last){ last=t.g; h += '<tr class="gh" style="--gc:'+gcol(t.g)+'"><td colspan="7">'+esc(GROUPS[t.g].name)+'</td></tr>'; }
+      h += '<tr><td><b>'+esc(t.name)+'</b></td><td style="font-size:13px;color:var(--ink2);min-width:220px">'+esc(t.now)+'</td>'+
+        '<td class="c">'+lv(t.level,'lvc','data-i="'+i+'" role="button" tabindex="0" title="クリックで変更"')+'</td>'+
+        '<td class="c"><input type="number" id="wl_'+t.id+'" data-i="'+i+'" data-k="wl" min="0" max="100" value="'+t.wl+'" aria-label="'+esc(t.name)+'の工数比率"></td>'+
+        '<td class="c"><input type="number" id="ve_'+t.id+'" data-i="'+i+'" data-k="ve" min="1" max="5" value="'+t.ve+'" aria-label="'+esc(t.name)+'の確かめやすさ"></td>'+
+        '<td class="c"><input type="number" id="ri_'+t.id+'" data-i="'+i+'" data-k="ri" min="1" max="5" value="'+t.ri+'" aria-label="'+esc(t.name)+'の影響リスク"></td>'+
+        '<td class="c"><input type="number" id="si_'+t.id+'" data-i="'+i+'" data-k="si" min="1" max="5" value="'+t.si+'" aria-label="'+esc(t.name)+'の証拠の入手性"></td></tr>';
+    });
+    tbody.innerHTML = h;
+  }
+  tbody.addEventListener("input", function(e){
+    var el = e.target; if(!el.dataset || !el.dataset.k) return;
+    var t = state.tasks[+el.dataset.i], k = el.dataset.k;
+    t[k] = k==="wl" ? clamp(el.value,0,100) : clamp(el.value,1,5);
+    save(); refresh();
+  });
+  function cycleLevel(el){ var t = state.tasks[+el.dataset.i]; t.level=(t.level+1)%6; el.className="lv L"+t.level+" lvc"; el.textContent="L"+t.level; save(); refresh(); renderQ(); }
+  tbody.addEventListener("click", function(e){ var el=e.target.closest(".lvc"); if(el) cycleLevel(el); });
+  tbody.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ var el=e.target.closest(".lvc"); if(el){ e.preventDefault(); cycleLevel(el);} } });
+
+  document.getElementById("btnReset").addEventListener("click", function(){ state = fresh(); save(); syncWeights(); renderTasks(); renderQ(); refresh(); });
+  document.getElementById("btnCopy").addEventListener("click", function(){
+    var txt = JSON.stringify({tasks:state.tasks.map(function(t){return {name:t.name,group:t.g,level:t.level,workload:t.wl,verifiability:t.ve,risk:t.ri,evidence:t.si,cap:t.cap};}), targets:state.q, weights:state.w}, null, 1);
+    var ta = document.getElementById("jsonOut"), msg = document.getElementById("copyMsg"); ta.value = txt;
+    function ok(){ msg.textContent="コピーしました"; ta.hidden=true; }
+    function ng(){ ta.hidden=false; ta.focus(); ta.select(); msg.textContent="下の欄から手動でコピーしてください"; }
+    try{ if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(ok,ng); } else ng(); }catch(err){ ng(); }
+  });
+
+  /* ---------- weights & ranking ---------- */
+  var W = {wl:["w_wl","wWl"], ve:["w_ve","wVe"], ri:["w_ri","wRi"], si:["w_si","wSi"], he:["w_he","wHe"]};
+  function syncWeights(){ Object.keys(W).forEach(function(k){ document.getElementById(W[k][0]).value = state.w[k]; document.getElementById(W[k][1]).textContent = "×"+state.w[k]; }); }
+  Object.keys(W).forEach(function(k){ document.getElementById(W[k][0]).addEventListener("input", function(e){ state.w[k]=+e.target.value; document.getElementById(W[k][1]).textContent="×"+state.w[k]; save(); renderRank(); }); });
+  function renderRank(){
+    var maxWl = Math.max.apply(null, state.tasks.map(function(t){return t.wl;})) || 1, w = state.w, sum = (w.wl+w.ve+w.ri+w.si+w.he) || 1;
+    var list = state.tasks.map(function(t){
+      var s = (w.wl*(t.wl/maxWl) + w.ve*((t.ve-1)/4) + w.ri*((5-t.ri)/4) + w.si*((t.si-1)/4) + w.he*((5-t.level)/5))/sum*100;
+      return {t:t, s:Math.round(s)};
+    }).sort(function(a,b){return b.s-a.s;});
+    var h = "";
+    list.forEach(function(r,i){
+      h += '<div class="row" style="--gc:'+gcol(r.t.g)+'"><span class="sc">'+(i+1)+'</span><div class="track"><div class="bar" style="width:'+r.s+'%"></div><span class="lab"><b style="color:var(--gc)">群'+r.t.g+'</b>　'+esc(r.t.name)+'</span></div><span class="sc">'+r.s+'</span></div>';
+    });
+    document.getElementById("rank").innerHTML = h;
+  }
+
+  /* ---------- matrix ---------- */
+  function renderMatrix(){
+    var X0=90, X1=730, Y0=30, Y1=430, mid=(X0+X1)/2, midy=(Y0+Y1)/2;
+    function x(v){ return X0+34+(v-1)/4*(X1-X0-68); } function y(v){ return Y1-34-(v-1)/4*(Y1-Y0-68); }
+    var s = '';
+    s += '<rect x="'+X0+'" y="'+Y0+'" width="'+(mid-X0)+'" height="'+(midy-Y0)+'" style="fill:var(--soft)"/>';
+    s += '<rect x="'+mid+'" y="'+midy+'" width="'+(X1-mid)+'" height="'+(Y1-midy)+'" style="fill:var(--c2);fill-opacity:.10"/>';
+    s += '<text class="ts" x="'+(X0+8)+'" y="'+(Y0+16)+'">人主導＋AI支援</text><text class="ts e" x="'+(X1-8)+'" y="'+(Y0+16)+'">任せる＋人が承認</text>';
+    s += '<text class="ts" x="'+(X0+8)+'" y="'+(Y1-8)+'">任せる＋抜き取り確認</text><text class="ts e" x="'+(X1-8)+'" y="'+(Y1-8)+'">任せて完結</text>';
+    s += '<path class="axis" d="M'+X0+','+Y0+' V'+Y1+' H'+X1+'"/>';
+    for(var v=1;v<=5;v++){ s += '<text class="ts m" x="'+x(v)+'" y="'+(Y1+18)+'">'+v+'</text><text class="ts e" x="'+(X0-8)+'" y="'+(y(v)+4)+'">'+v+'</text>'; }
+    s += '<text class="t m" x="'+mid+'" y="'+(Y1+42)+'">確かめやすさ →</text>';
+    s += '<text class="t m" x="30" y="'+midy+'" transform="rotate(-90 30 '+midy+')">影響リスク →</text>';
+    s += '<line class="a" x1="'+(x(1.6))+'" y1="'+(Y0+40)+'" x2="'+(x(2.8))+'" y2="'+(Y0+40)+'"/><text class="ts" x="'+(x(1.6))+'" y="'+(Y0+34)+'">確かめる手段を作って右へ</text>';
+    var seen = {};
+    state.tasks.forEach(function(t,i){
+      var k = t.ve+"-"+t.ri, n = seen[k]||0; seen[k]=n+1;
+      var ang = n*2.1, off = n?26:0;
+      var cx = x(t.ve)+Math.cos(ang)*off, cy = y(t.ri)+Math.sin(ang)*off, r = 9+Math.sqrt(t.wl)*2.8;
+      s += '<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="'+r.toFixed(1)+'" style="fill:'+gcol(t.g)+';fill-opacity:.8;stroke:var(--paper);stroke-width:1.5"/>';
+      s += '<text x="'+cx.toFixed(1)+'" y="'+(cy+4).toFixed(1)+'" style="fill:var(--paper);font-size:11.5px;font-weight:700;text-anchor:middle">'+(i+1)+'</text>';
+    });
+    var ly = Y1+74;
+    state.tasks.forEach(function(t,i){
+      var col=i%2, row=Math.floor(i/2);
+      s += '<circle cx="'+(X0-40+col*350)+'" cy="'+(ly+row*22-4)+'" r="6" style="fill:'+gcol(t.g)+';fill-opacity:.8"/>';
+      s += '<text class="ts" x="'+(X0-28+col*350)+'" y="'+(ly+row*22)+'" style="font-size:12px;fill:var(--ink)"><tspan style="font-weight:700">'+(i+1)+'</tspan> '+esc(t.name)+'</text>';
+    });
+    document.getElementById("matrix").innerHTML = s;
+  }
+
+  /* ---------- quarter targets ---------- */
+  var qbody = document.querySelector("#qTable tbody");
+  function renderQ(){
+    var h="", last=0;
+    state.tasks.forEach(function(t){
+      if(t.g!==last){ last=t.g; h += '<tr class="gh" style="--gc:'+gcol(t.g)+'"><td colspan="12">'+esc(GROUPS[t.g].name)+'</td></tr>'; }
+      var arr = state.q[t.id] || (state.q[t.id]=[0,0,0,0,0,0,0,0]);
+      h += '<tr><td><b>'+esc(t.name)+'</b></td><td class="c">'+lv(t.level)+'</td>';
+      arr.forEach(function(l,qi){ h += '<td class="q">'+lv(l,'lvc'+(l>t.cap?' over':''),'data-t="'+t.id+'" data-q="'+qi+'" role="button" tabindex="0" aria-label="'+esc(t.name)+' 目標"')+'</td>'; });
+      h += '<td class="c"><span class="cap lvc" data-cap="'+t.id+'" role="button" tabindex="0" title="クリックで上限を変更">L'+t.cap+'</span></td><td style="font-size:12.5px;color:var(--ink2);min-width:180px">'+esc(t.why)+'</td></tr>';
+    });
+    qbody.innerHTML = h;
+  }
+  function onQ(el){
+    if(el.dataset.cap){ var t = state.tasks.filter(function(x){return x.id===el.dataset.cap;})[0]; t.cap = t.cap>=5?1:t.cap+1; save(); renderQ(); return; }
+    var arr = state.q[el.dataset.t], qi = +el.dataset.q; arr[qi]=(arr[qi]+1)%6; save(); renderQ();
+    var again = qbody.querySelector('[data-t="'+el.dataset.t+'"][data-q="'+qi+'"]'); if(again) again.focus();
+  }
+  qbody.addEventListener("click", function(e){ var el=e.target.closest(".lvc"); if(el) onQ(el); });
+  qbody.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ var el=e.target.closest(".lvc"); if(el){ e.preventDefault(); onQ(el);} } });
+
+  /* ---------- streams ---------- */
+  function renderStreams(){
+    var h="";
+    STREAMS.forEach(function(st){
+      h += '<tr><td><b style="color:var(--'+st.color+')">'+esc(st.name)+'</b></td>';
+      st.q.forEach(function(c){ var dim = (!c || c==="運用・改善"); h += '<td class="'+(dim?'empty':'')+'">'+(c?esc(c):'—')+'</td>'; });
+      h += '</tr>';
+    });
+    document.querySelector("#streamTable tbody").innerHTML = h;
+  }
+
+  function refresh(){
+    var sum = state.tasks.reduce(function(a,t){return a+t.wl;},0), el = document.getElementById("wlSum");
+    el.textContent = sum+"%"; el.style.color = sum===100 ? 'var(--ok)' : 'var(--warn)';
+    renderGroups(); renderMatrix(); renderRank();
+  }
+
+  syncWeights(); renderTasks(); renderQ(); renderStreams(); renderRoadmap(); refresh();
+})();
+</script>
+</body>
+</html>
